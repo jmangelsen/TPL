@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: subscribers
+    // Document ID: auto-generated or email-based
+    // Fields:
+    //   - email: string (required, email format)
+    //   - date: string (required, ISO 8601 format)
+    //
+    // Collection: users
+    // Document ID: auth.uid
+    // Fields:
+    //   - email: string (required, email format)
+    //   - role: string (required, 'admin' or 'user')
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "mangelsenj@gmail.com" && request.auth.token.email_verified == true) ||
+          (request.auth.token.email == "research@aiphysicallayer.com" && request.auth.token.email_verified == true) ||
+          (request.auth.token.email == "isabella.britson20@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    function isValidSubscriber(data) {
+      return data.keys().hasAll(['email', 'date']) &&
+             data.keys().hasOnly(['email', 'date']) &&
+             isValidEmail(data.email) &&
+             isValidDateString(data.date);
+    }
+
+    function isValidReportRequest(data) {
+      return data.keys().hasAll(['persona', 'name', 'email', 'organization', 'instructions', 'date']) &&
+             data.keys().hasOnly(['persona', 'name', 'email', 'organization', 'instructions', 'date']) &&
+             data.persona is string && data.persona.size() < 100 &&
+             data.name is string && data.name.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.organization is string && data.organization.size() < 200 &&
+             data.instructions is string && data.instructions.size() < 5000 &&
+             isValidDateString(data.date);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /test/connection {
+      allow read: if true;
+    }
+
+    match /subscribers/{subscriberId} {
+      // Anyone can subscribe (create), but only admins can list or read all
+      allow create: if isValidSubscriber(request.resource.data);
+      allow read: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /report_requests/{requestId} {
+      // Anyone can request a report, but only admins can read them
+      allow create: if isValidReportRequest(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      // Users can read their own profile, admins can do everything
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /savedResearch/{researchId} {
+      // Users can read and write their own research, admins can do everything
+      allow read, create, delete: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+    }
+  }
+}

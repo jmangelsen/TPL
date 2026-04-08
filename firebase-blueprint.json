@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "subscriber": {
+      "title": "Subscriber",
+      "description": "A person who has subscribed to the newsletter.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address of the subscriber."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time the subscription was created."
+        }
+      },
+      "required": ["email", "date"]
+    },
+    "user": {
+      "title": "User",
+      "description": "A user of the application.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address of the user."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "user"],
+          "description": "The role of the user."
+        },
+        "isSubscribed": {
+          "type": "boolean",
+          "description": "Whether the user has an active subscription."
+        },
+        "stripeCustomerId": {
+          "type": "string",
+          "description": "The Stripe customer ID."
+        },
+        "stripeSubscriptionId": {
+          "type": "string",
+          "description": "The Stripe subscription ID."
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "savedResearch": {
+      "title": "Saved Research",
+      "description": "A research item saved by a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["article", "analysis", "visualization"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "content", "type", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/subscribers/{subscriberId}": {
+      "schema": "subscriber",
+      "description": "Collection of all newsletter subscribers."
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Collection of application users and their roles."
+    },
+    "/savedResearch/{researchId}": {
+      "schema": "savedResearch",
+      "description": "Collection of research items saved by users."
+    }
+  }
+}
