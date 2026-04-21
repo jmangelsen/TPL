@@ -1,0 +1,29 @@
+[
+  {
+    "id": "dc-001",
+    "name": "Example DC - Ashburn VA",
+    "lat": 39.0438,
+    "lng": -77.4874,
+    "type": "Hyperscale",
+    "status": "Operating",
+    "powerDrawMW": 200
+  },
+  {
+    "id": "dc-002",
+    "name": "Example DC - Phoenix AZ",
+    "lat": 33.4484,
+    "lng": -112.074,
+    "type": "Hyperscale",
+    "status": "Operating",
+    "powerDrawMW": 150
+  },
+  {
+    "id": "dc-003",
+    "name": "Example DC - Dallas TX",
+    "lat": 32.7767,
+    "lng": -96.797,
+    "type": "Colo",
+    "status": "Operating",
+    "powerDrawMW": 80
+  }
+]

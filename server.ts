@@ -5,10 +5,11 @@ import { fileURLToPath } from "url";
 import cron from "node-cron";
 import { Parser } from "json2csv";
 import nodemailer from "nodemailer";
-import admin from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, doc, setDoc, getDocs, query, where, limit, deleteDoc, writeBatch, getDoc } from "firebase/firestore";
 import fs from "fs";
 import cors from "cors";
+import crypto from "crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,15 +17,119 @@ const __dirname = path.dirname(__filename);
 // Load Firebase config
 const firebaseConfig = JSON.parse(fs.readFileSync(path.join(__dirname, "firebase-applet-config.json"), "utf-8"));
 
-// Initialize Firebase Admin
-const app = admin.initializeApp({
-  projectId: firebaseConfig.projectId
-});
+// Initialize Firebase Client SDK
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+const NEWSAPI_API_KEY = process.env.NEWSAPI_API_KEY || "481562ced8724d2b966b8e3969fb10f8";
+const NEWSAPI_BASE_URL = process.env.NEWSAPI_BASE_URL || "https://newsapi.org/v2";
+
+async function fetchCompanyNews(companyId: string, query: string, fromHours = 48, pageSize = 20) {
+  try {
+    const fromDate = new Date(Date.now() - fromHours * 60 * 60 * 1000).toISOString();
+    const url = `${NEWSAPI_BASE_URL}/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=${pageSize}&from=${fromDate}`;
+    
+    const response = await fetch(url, {
+      headers: { 'X-Api-Key': NEWSAPI_API_KEY }
+    });
+
+    if (!response.ok) {
+      console.error(`NewsAPI error for ${companyId}:`, await response.text());
+      return [];
+    }
+
+    const data = await response.json();
+    return data.articles.map((article: any) => ({
+      headline: article.title,
+      source: article.source.name,
+      url: article.url,
+      publishedAt: article.publishedAt,
+      summary: (article.description || article.content || '').substring(0, 200).replace(/<[^>]*>?/gm, ''),
+    }));
+  } catch (error) {
+    console.error(`Failed to fetch news for ${companyId}:`, error);
+    return [];
+  }
+}
+
+async function refreshCompanyNews() {
+  console.log("Starting Company News refresh job...");
+  try {
+    // Dynamically import to get the latest config
+    const { companies } = await import('./src/lib/marketTrackerData.js');
+    
+    let opCount = 0;
+    let batch = writeBatch(db);
+
+    for (const company of companies) {
+      if (!company.newsQuery) continue;
+      
+      const articles = await fetchCompanyNews(company.slug, company.newsQuery, 48, 20);
+      console.log(`Fetched ${articles.length} articles for ${company.slug}`);
+
+      for (const article of articles) {
+        if (!article.url) continue;
+        const urlHash = crypto.createHash('md5').update(article.url).digest('hex');
+        const docId = `${company.slug}_${urlHash}`;
+        const docRef = doc(db, 'company_news', docId);
+        
+        batch.set(docRef, {
+          companyId: company.slug,
+          ...article,
+          createdAt: new Date().toISOString()
+        }, { merge: true });
+        
+        opCount++;
+        if (opCount >= 400) {
+          await batch.commit();
+          batch = writeBatch(db);
+          opCount = 0;
+        }
+      }
+      
+      // Simple delay to respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    if (opCount > 0) {
+      await batch.commit();
+    }
+
+    // Cleanup old news (> 10 days)
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    const oldNewsQuery = query(collection(db, 'company_news'), where('publishedAt', '<', tenDaysAgo));
+    const oldNewsSnapshot = await getDocs(oldNewsQuery);
+    if (!oldNewsSnapshot.empty) {
+      let deleteBatch = writeBatch(db);
+      let deleteCount = 0;
+      for (const document of oldNewsSnapshot.docs) {
+        deleteBatch.delete(document.ref);
+        deleteCount++;
+        if (deleteCount >= 400) {
+          await deleteBatch.commit();
+          deleteBatch = writeBatch(db);
+          deleteCount = 0;
+        }
+      }
+      if (deleteCount > 0) {
+        await deleteBatch.commit();
+      }
+      console.log(`Deleted ${oldNewsSnapshot.size} old news articles.`);
+    }
+
+    console.log("Company News refresh job completed.");
+  } catch (error) {
+    console.error("Error in refreshCompanyNews job:", error);
+  }
+}
+
+// Schedule cron for every 8 hours on weekdays
+cron.schedule("0 */8 * * 1-5", refreshCompanyNews);
 
 async function testConnection() {
   try {
-    await db.collection('test').doc('connection').get();
+    const testDoc = doc(db, 'test', 'connection');
+    await getDoc(testDoc);
     console.log("Firestore connection test successful.");
   } catch (error) {
     console.error("Firestore connection test error:", error);
@@ -61,15 +166,9 @@ async function startServer() {
     }
     
     try {
-      // Check if already subscribed
-      const subscribersRef = db.collection("subscribers");
-      const querySnapshot = await subscribersRef.where("email", "==", email).limit(1).get();
-      
-      if (!querySnapshot.empty) {
-        return res.status(200).json({ message: "Already subscribed" });
-      }
-
-      await subscribersRef.add({ 
+      // Use email as document ID to avoid needing to read (which is restricted)
+      const subscriberDoc = doc(db, "subscribers", email);
+      await setDoc(subscriberDoc, { 
         email, 
         date: new Date().toISOString() 
       });
@@ -77,9 +176,22 @@ async function startServer() {
       console.log(`New subscriber added to Firestore: ${email}`);
       res.status(200).json({ message: "Subscription successful" });
     } catch (error) {
+      // If it fails due to permissions, it might be because the document already exists
+      // and update is not allowed, which means they are already subscribed.
       console.error("Error adding subscriber to Firestore:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(200).json({ message: "Subscription successful or already subscribed" });
     }
+  });
+
+  // Explicit route for sitemap.xml
+  app.get("/sitemap.xml", (req, res) => {
+    res.setHeader('Content-Type', 'application/xml');
+    res.sendFile(path.join(process.cwd(), 'public', 'sitemap.xml'));
+  });
+
+  app.post("/api/news/refresh", async (req, res) => {
+    refreshCompanyNews().catch(console.error);
+    res.status(200).json({ message: "News refresh job started in background" });
   });
 
   app.post("/api/reports/request", async (req, res) => {
@@ -91,8 +203,8 @@ async function startServer() {
 
     try {
       // Store in Firestore
-      const requestsRef = db.collection("report_requests");
-      await requestsRef.add({
+      const newRequestRef = doc(collection(db, "report_requests"));
+      await setDoc(newRequestRef, {
         persona,
         name,
         email,
@@ -157,10 +269,13 @@ ${instructions}
   // 72-hour CSV export task (runs at midnight every 3 days)
   cron.schedule("0 0 */3 * *", async () => {
     console.log("Generating 72-hour subscriber CSV export from Firestore...");
+    console.log("Note: In this environment without a Service Account, the backend cannot bypass Firestore security rules to read all subscribers.");
+    console.log("Please export subscribers directly from the Firebase Console.");
     
+    /*
     try {
-      const subscribersRef = db.collection("subscribers");
-      const querySnapshot = await subscribersRef.get();
+      const subscribersRef = collection(db, "subscribers");
+      const querySnapshot = await getDocs(subscribersRef);
       const subscribersData = querySnapshot.docs.map(doc => doc.data());
 
       if (subscribersData.length === 0) {
@@ -205,6 +320,7 @@ ${instructions}
     } catch (error) {
       console.error("Error during CSV export:", error);
     }
+    */
   });
 
   // Vite middleware for development

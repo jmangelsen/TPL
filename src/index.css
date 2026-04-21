@@ -23,6 +23,14 @@
 }
 
 @layer base {
+  :root {
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-text-muted: #94a3b8;
+    --color-text-faint: #64748b;
+    --color-surface-offset: rgba(255, 255, 255, 0.05);
+    --transition-interactive: 180ms ease;
+  }
+
   html {
     @apply scroll-smooth;
     -webkit-tap-highlight-color: transparent;
@@ -42,6 +50,173 @@
   }
 }
 
+/* Left Nav Rail CSS */
+.left-rail {
+  height: 100%;
+  background: #050407;
+  border-right: 1px solid rgba(255,255,255,0.12);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 8px;
+  transition: width 0.2s ease;
+  z-index: 20;
+}
+
+.left-rail.collapsed {
+  width: 64px;
+  align-items: center;
+}
+
+.left-rail.expanded {
+  width: 220px;
+  align-items: flex-start;
+}
+
+.rail-logo img {
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.rail-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.rail-link {
+  display: block;
+  padding: 6px 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.8);
+}
+
+/* InfoCard CSS */
+.tpl-info-card{
+  position:absolute; left:16px; bottom:16px; max-width:260px;
+  background:#05040a; border-radius:8px; border:1px solid rgba(255,255,255,0.08);
+  padding:10px 12px 12px 12px; box-shadow:0 18px 40px rgba(0,0,0,0.85);
+  color:#fff; z-index:25;
+}
+.tpl-info-card-header{margin-bottom:6px;}
+.tpl-info-title{font-size:12px;font-weight:600;}
+.tpl-info-subtitle{font-size:11px;color:rgba(255,255,255,0.6);}
+.tpl-info-metrics{display:flex;flex-direction:column;gap:2px;}
+.tpl-info-metric-row{display:flex;justify-content:space-between;font-size:11px;}
+.tpl-info-metric-label{color:rgba(255,255,255,0.55);}
+.tpl-info-metric-value{color:rgba(255,255,255,0.9);margin-left:8px;}
+.tpl-info-close{
+  position:absolute; top:6px; right:8px; border:none; background:transparent;
+  color:rgba(255,255,255,0.6); cursor:pointer; font-size:13px;
+}
+
+.rail-toggle {
+  margin-top: auto;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+/* Topography Background System */
+.topo-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/Topo.Microchip.png');
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-position: var(--topo-x, 0%) 50%;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.map-topo-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/Topo.Microchip.png');
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-position: 15% 40%; /* subtle diagonal flow */
+  opacity: 0.10;                /* subtle on dark bg */
+  pointer-events: none;
+  z-index: 0;
+}
+
+.topo-tile-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/Topo.Microchip.png');
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-position-x: var(--topo-x, 0%);
+  background-position-y: 50%;
+  pointer-events: none;
+  z-index: 0;
+  transition: background-position 400ms ease-out, transform 400ms ease-out;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .group:hover .topo-tile-bg {
+    background-position-x: calc(var(--topo-x, 0%) + 5%) !important;
+    transform: scale(1.05);
+  }
+}
+
+/*
+ * TPL COLOR DOCTRINE
+ * Status colors (green, amber/orange, red) are NEVER displayed in a resting,
+ * non-interactive static state.
+ *
+ * In resting state, all elements use ONLY:
+ *   - --color-text (primary text)
+ *   - --color-text-muted (secondary text)
+ *   - --color-text-faint (tertiary / decorative text)
+ *   - --color-border / --color-divider (structural lines)
+ *   - --color-surface through --color-surface-offset (backgrounds)
+ *   - --color-primary (teal) ONLY for interactive CTAs and active links
+ *
+ * Status colors appear ONLY on:
+ *   - :hover of a card, row, tag, or badge
+ *   - :focus-visible of an interactive element
+ *   - An explicitly active/selected state (e.g. active filter, selected segment)
+ *   - A user-triggered expansion (e.g. open drawer, expanded record)
+ *
+ * This keeps the resting UI achromatic and lets color carry signal weight.
+ */
+
+/* Status color token — applied only via hover cascade */
+.status-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: background var(--transition-interactive),
+              color var(--transition-interactive),
+              border-color var(--transition-interactive);
+}
+
+/* Parent hover reveals the status color */
+.interactive-row:hover .status-label,
+.interactive-card:hover .status-label {
+  background: var(--status-color-bg, var(--color-surface-offset));
+  color: var(--status-color, var(--color-text-muted));
+  border-color: var(--status-color-border, var(--color-border));
+}
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -51,4 +226,311 @@
   animation: marquee 30s linear infinite;
 }
 
+.tracker-donut-topo {
+  position: absolute;
+  inset: 0;
+  background-image: url('/Topo.Microchip.png');
+  background-size: 200% 140%;
+  background-repeat: no-repeat;
+  background-position: 10% 50%;
+  opacity: 0.10;
+  pointer-events: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  transform-origin: center;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Libre+Baskerville:italic@400&display=swap');
+
+.tpl-filter-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 260px;
+  max-height: calc(100% - 32px);
+  z-index: 20;
+}
+
+.tpl-filter-panel-inner {
+  background: #05040a;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 12px 14px 12px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.tpl-filter-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tpl-filter-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tpl-filter-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.tpl-filter-beta-pill {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  background: #f7c948;
+  color: #1a130b;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.tpl-filter-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+}
+
+.tpl-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.tpl-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.72);
+}
+
+.tpl-section-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.7);
+  font-size: 9px;
+}
+
+.tpl-tech-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tpl-tech-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.tpl-tech-row-active .tpl-tech-name {
+  color: rgba(255,255,255,0.9);
+}
+
+.tpl-tech-row-muted .tpl-tech-name {
+  color: rgba(255,255,255,0.4);
+}
+
+.tpl-tech-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.tpl-tech-name {
+  font-size: 11px;
+  flex: 1;
+  text-align: left;
+}
+
+.tpl-checkbox-row {
+  margin-bottom: 4px;
+}
+
+.tpl-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+}
+
+.tpl-checkbox-text {
+  flex: 1;
+}
+
+.tpl-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tpl-tx-row {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.tpl-tx-line {
+  width: 32px;
+  height: 2px;
+  border-radius: 999px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.tpl-info-card {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  max-width: 260px;
+  background: #05040a;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 12px 12px 12px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85);
+  color: #ffffff;
+  z-index: 25;
+}
+
+.tpl-info-card-header {
+  margin-bottom: 6px;
+}
+
+.tpl-info-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tpl-info-subtitle {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+}
+
+.tpl-info-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tpl-info-metric-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.tpl-info-metric-label {
+  color: rgba(255,255,255,0.55);
+}
+
+.tpl-info-metric-value {
+  color: rgba(255,255,255,0.9);
+  margin-left: 8px;
+}
+
+
+/* TPL MAP STYLES */
+
+.tpl-map-shell { position: fixed; inset: 0; display: flex; z-index: 50; }
+.tpl-map-shell-canvas { flex: 1; position: relative; }
+.tpl-left-rail { position: absolute; left: 0; top: 0; bottom: 0; z-index: 60; background: #050407; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; transition: width 0.2s ease; overflow: hidden; }
+.tpl-rail-logo { padding: 16px; border-bottom: 1px solid #1a1a1a; }
+.tpl-rail-seal { width: 24px; height: 24px; }
+.tpl-rail-links { flex: 1; padding-top: 20px; }
+.tpl-rail-link { display: flex; align-items: center; padding: 12px 16px; color: #64748b; text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.1s; gap: 12px; }
+.tpl-rail-link:hover, .tpl-rail-link--active { color: #fff; }
+.tpl-rail-link--active { background: rgba(255,255,255,0.05); border-left: 2px solid #60A5FA; }
+.tpl-rail-link-label { white-space: nowrap; }
+.tpl-rail-bottom { padding: 16px; font-size: 10px; color: #444; font-family: monospace; }
+
+.tpl-filter-panel { position: absolute; right: 16px; top: 16px; width: 280px; max-height: calc(100vh - 32px); background: rgba(10,10,12,0.95); backdrop-filter: blur(8px); border: 1px solid #222; border-radius: 8px; display: flex; flex-direction: column; z-index: 55; }
+.tpl-fp-fab { position: absolute; right: 16px; top: 16px; width: 40px; height: 40px; background: #0a0a0c; border: 1px solid #222; color: #fff; border-radius: 8px; z-index: 55; display: flex; align-items: center; justify-content: center; }
+.tpl-fp-header { padding: 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: flex-start; }
+.tpl-fp-header-text { }
+.tpl-fp-header-title { font-size: 14px; color: #fff; font-weight: 600; display: block; }
+.tpl-fp-header-sub { font-size: 11px; color: #888; }
+.tpl-fp-close { background: transparent; border: none; color: #666; cursor: pointer; }
+.tpl-fp-stats { display: flex; border-bottom: 1px solid #222; }
+.tpl-fp-stat { flex: 1; padding: 12px; text-align: center; }
+.tpl-fp-stat-value { display: block; color: #fff; font-weight: 600; font-size: 14px; }
+.tpl-fp-stat-label { display: block; font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px; }
+.tpl-fp-stat-divider { width: 1px; background: #222; }
+.tpl-fp-scroll { overflow-y: auto; flex: 1; padding: 8px 0; }
+.tpl-fp-section { padding: 8px 0; }
+.tpl-fp-section-header { width: 100%; display: flex; align-items: center; padding: 10px 16px; background: transparent; border: none; color: #ccc; font-size: 12px; gap: 8px; cursor: pointer; }
+.tpl-fp-section-title { font-weight: 600; flex: 1; text-align: left; }
+.tpl-fp-section-body { padding: 4px 16px 12px; }
+.tpl-fp-row { width: 100%; display: flex; align-items: center; padding: 6px 0; background: transparent; border: none; color: #fff; gap: 8px; font-size: 12px; cursor: pointer; }
+.tpl-fp-row--muted { opacity: 0.5; }
+.tpl-fp-dot { width: 8px; height: 8px; border-radius: 50%; border: 1px solid transparent; }
+.tpl-fp-row-text { flex: 1; text-align: left; }
+.tpl-fp-row-sub { display: block; font-size: 10px; color: #666; }
+.tpl-fp-pill { font-size: 9px; padding: 2px 4px; border-radius: 4px; }
+.tpl-fp-pill--on { background: rgba(96,165,250,0.2); color: #60A5FA; }
+.tpl-fp-tx-line { width: 20px; height: 2px; }
+.tpl-fp-tx-legend { margin-top: 8px; padding-top: 8px; border-top: 1px solid #222; }
+.tpl-fp-tx-legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.tpl-fp-tx-legend-line { width: 12px; height: 2px; }
+.tpl-fp-tx-legend-label { font-size: 11px; color: #888; }
+.tpl-fp-dc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tpl-fp-footer { padding: 12px; border-top: 1px solid #222; font-size: 10px; color: #444; display: flex; justify-content: space-between; }
+
+.tpl-info-card { position: absolute; background: rgba(0,0,0,0.85); border: 1px solid #333; border-radius: 8px; padding: 12px; z-index: 56; color: #fff; pointer-events: auto; }
+.tpl-ic-kind { display: flex; align-items: center; gap: 6px; font-size: 10px; text-transform: uppercase; margin-bottom: 8px; }
+.tpl-ic-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.tpl-ic-subtitle { font-size: 11px; color: #888; margin-bottom: 8px; }
+.tpl-ic-metrics { border-top: 1px solid #333; padding-top: 8px; font-size: 11px; }
+.tpl-ic-metric-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.tpl-ic-metric-value { font-family: monospace; }
+.tpl-ic-close { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #666; cursor: pointer; }
+.tpl-ic-pinned-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.tpl-spinner { border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid #60A5FA; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+

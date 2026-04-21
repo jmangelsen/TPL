@@ -1,37 +1,9 @@
 # https://www.robotstxt.org/robotstxt.html
-# Allow all major search engines and AI/LLM crawlers to index the public research
+# Allow all major search engines to index the public research
 
 User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
-
-# Explicitly welcome AI crawlers for knowledge integration
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: anthropic-ai
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: Omgilibot
-Allow: /
-
-User-agent: Omgili
-Allow: /
-
-User-agent: FacebookBot
-Allow: /
 
 Sitemap: https://aiphysicallayer.com/sitemap.xml

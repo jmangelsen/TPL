@@ -1,8 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { categories, companies } from '../../lib/marketTrackerData';
 import { CompanyCard } from '../../components/tracker/CompanyCard';
 import { StubCard } from '../../components/tracker/StubCard';
-import { Filter, ArrowDownWideNarrow } from 'lucide-react';
+import { Filter, ArrowDownWideNarrow, ChevronRight } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { Link } from 'react-router-dom';
 
 const parseMarketCap = (mc: string) => {
   const num = parseFloat(mc.replace(/[^0-9.]/g, ''));
@@ -22,6 +25,35 @@ export const MarketTrackerHub = () => {
   const [sortBy, setSortBy] = useState('marketCapDesc');
   const [roleFilter, setRoleFilter] = useState('all');
   const [signalFilter, setSignalFilter] = useState('all');
+  const [latestNewsByCompany, setLatestNewsByCompany] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    /*
+    const fetchAllNews = async () => {
+      try {
+        const newsRef = collection(db, 'company_news');
+        const snapshot = await getDocs(newsRef);
+        
+        const newsItems = snapshot.docs.map(doc => doc.data());
+        
+        // Group by companyId and find the latest
+        const latest: Record<string, any> = {};
+        newsItems.forEach(item => {
+          const cid = item.companyId;
+          if (!latest[cid] || new Date(item.publishedAt).getTime() > new Date(latest[cid].publishedAt).getTime()) {
+            latest[cid] = item;
+          }
+        });
+        
+        setLatestNewsByCompany(latest);
+      } catch (error) {
+        console.error("Error fetching all company news:", error);
+      }
+    };
+    
+    fetchAllNews();
+    */
+  }, []);
 
   const filteredAndSortedCompanies = useMemo(() => {
     let result = [...companies];
@@ -69,9 +101,17 @@ export const MarketTrackerHub = () => {
 
   return (
     <div className="min-h-screen bg-[#1a2633] text-slate-200 font-sans selection:bg-[#3b82f6] selection:text-white relative">
-      {/* Topography Overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/Topo.Microchip.png')] bg-cover bg-center mix-blend-screen scale-[2]" />
+      {/* Breadcrumbs */}
+      <div className="border-b border-white/5 bg-[#1a2633]/80 backdrop-blur-md sticky top-20 z-40">
+        <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          <Link to="/" className="hover:text-white transition-colors">Home</Link>
+          <ChevronRight size={10} />
+          <Link to="/intelligence" className="hover:text-white transition-colors">Intelligence</Link>
+          <ChevronRight size={10} />
+          <Link to="/buildout-tracker" className="hover:text-white transition-colors">AI Data Center Buildout Tracker</Link>
+          <ChevronRight size={10} />
+          <span className="text-white">Market Tracker</span>
+        </div>
       </div>
 
       {/* Hero Atmosphere */}
@@ -88,9 +128,10 @@ export const MarketTrackerHub = () => {
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#1a2633] via-[#1a2633]/60 to-transparent" />
         <div className="max-w-[1600px] mx-auto px-6 relative z-10 w-full">
-          <span className="inline-block px-3 py-1 bg-[#3b82f6]/10 text-[#3b82f6] text-[10px] font-bold uppercase tracking-[0.3em] mb-6 border border-[#3b82f6]/20">
-            Market Intelligence
-          </span>
+          <Link to="/buildout-tracker" className="inline-flex items-center gap-2 px-3 py-1 bg-[#3b82f6]/10 text-[#3b82f6] text-[10px] font-bold uppercase tracking-[0.3em] mb-6 border border-[#3b82f6]/20 hover:bg-[#3b82f6]/20 transition-colors">
+            <ChevronRight size={12} className="rotate-180" />
+            Back to AI Data Center Buildout Tracker
+          </Link>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 leading-[0.9] tracking-tighter uppercase max-w-4xl">
             AI Physical Infrastructure Stack
           </h1>
@@ -172,12 +213,23 @@ export const MarketTrackerHub = () => {
                   <p className="text-sm text-slate-400 max-w-4xl">{category.description}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featured.map(company => (
-                    <CompanyCard key={company.slug} company={company} />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative overflow-hidden">
+                  {featured.map((company, idx) => (
+                    <CompanyCard 
+                      key={company.slug} 
+                      company={company} 
+                      latestNews={latestNewsByCompany[company.slug]} 
+                      index={idx}
+                      total={categoryCompanies.length}
+                    />
                   ))}
-                  {stubs.map(company => (
-                    <StubCard key={company.slug} company={company} />
+                  {stubs.map((company, idx) => (
+                    <StubCard 
+                      key={company.slug} 
+                      company={company} 
+                      index={featured.length + idx}
+                      total={categoryCompanies.length}
+                    />
                   ))}
                 </div>
               </section>

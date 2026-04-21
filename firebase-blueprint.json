@@ -36,14 +36,6 @@
         "isSubscribed": {
           "type": "boolean",
           "description": "Whether the user has an active subscription."
-        },
-        "stripeCustomerId": {
-          "type": "string",
-          "description": "The Stripe customer ID."
-        },
-        "stripeSubscriptionId": {
-          "type": "string",
-          "description": "The Stripe subscription ID."
         }
       },
       "required": ["email", "role"]
@@ -60,6 +52,56 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "title", "content", "type", "timestamp"]
+    },
+    "companyNews": {
+      "title": "Company News",
+      "description": "News articles related to a tracked company.",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "headline": { "type": "string" },
+        "source": { "type": "string" },
+        "url": { "type": "string" },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyId", "headline", "source", "url", "publishedAt", "createdAt"]
+    },
+    "sectorSpend": {
+      "title": "Sector Spend",
+      "description": "Evidence drawer data for a specific sector.",
+      "type": "object",
+      "properties": {
+        "sectorId": { "type": "string" },
+        "totalSpend": { "type": "number" },
+        "companies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entity": { "type": "string" },
+              "spend": { "type": "number" }
+            },
+            "required": ["entity", "spend"]
+          }
+        },
+        "narrative": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sectorId", "totalSpend", "companies", "narrative", "updatedAt"]
+    },
+    "siteError": {
+      "title": "Site Error",
+      "description": "An error that occurred on the site.",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "stack": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "url": { "type": "string" }
+      },
+      "required": ["message", "timestamp", "url"]
     }
   },
   "firestore": {
@@ -74,6 +116,18 @@
     "/savedResearch/{researchId}": {
       "schema": "savedResearch",
       "description": "Collection of research items saved by users."
+    },
+    "/company_news/{newsId}": {
+      "schema": "companyNews",
+      "description": "Collection of news articles related to tracked companies."
+    },
+    "/sector_spend/{sectorId}": {
+      "schema": "sectorSpend",
+      "description": "Collection of sector-specific evidence drawer data."
+    },
+    "/site_errors/{errorId}": {
+      "schema": "siteError",
+      "description": "Collection of site errors logged by the application."
     }
   }
 }

@@ -11,6 +11,8 @@ const methodologyModules = [
     scope: 'Major US grid interconnects and primary AI build corridors.',
     normalization: 'Raw MW availability and queue timelines are weighted against historical delivery rates and regional transmission constraints to determine the true delay risk.',
     labels: 'Constrained (severe delays), Elevated (growing queue depth), Tightening (early warning of capacity limits), Limited (localized issues).',
+    confidence: 'High (Grid operator data and OEM disclosures)',
+    indicator: 'Power availability is lagging; interconnection queue growth is leading',
     updated: 'Quarterly',
     limitations: 'Grid operator data can lag real-time market conditions by 3-6 months. High volume of speculative "ghost" projects in queues can artificially inflate raw wait times.'
   },
@@ -22,6 +24,8 @@ const methodologyModules = [
     scope: 'Global heavy electrical equipment supply chain for transformers, switchgear, and related high-voltage components.',
     normalization: 'Raw lead times are adjusted based on supplier reliability and raw material constraints (e.g., electrical steel).',
     labels: 'Constrained (100+ week lead times), Tightening (lead times increasing), Elevated (historically high but stable).',
+    confidence: 'High (OEM lead-time disclosures)',
+    indicator: 'Switchgear backlog is lagging; transformer lead time is leading',
     updated: 'Quarterly',
     limitations: 'Hyperscalers often secure priority allocations, meaning public lead times may overstate delays for top-tier buyers. Lead-time thresholds focus on large power transformers and other critical high-voltage equipment where 100+ week delays materially affect data center build schedules.'
   },
@@ -33,6 +37,8 @@ const methodologyModules = [
     scope: 'Water-stressed regions and major municipal hubs (e.g., Northern Virginia, Phoenix).',
     normalization: 'Combines physical water scarcity metrics with municipal policy shifts (e.g., new surcharges or usage caps) to assess total operational risk, recognizing that cooling architecture (evaporative vs. closed-loop) modulates how heavily facilities draw on stressed systems.',
     labels: 'Elevated (high baseline stress), Under Pressure (emerging municipal friction), Constrained (hard limits on new usage).',
+    confidence: 'Medium (Municipal reports and indices are reliable but highly localized)',
+    indicator: 'Water risk is lagging; municipal policy shifts are leading',
     updated: 'Quarterly',
     limitations: 'Highly localized; a region may be stable while a specific municipality is constrained.'
   },
@@ -44,6 +50,8 @@ const methodologyModules = [
     scope: 'Global supply chain for enterprise and hyperscale cooling infrastructure.',
     normalization: 'Lead times are cross-referenced with component availability (e.g., CDUs, specialized piping) to identify true bottlenecks.',
     labels: 'Tightening (lead times extending), Under Pressure (component shortages), Constrained (critical path delays). The cooling indicator is surfaced when market conditions move beyond normal; neutral conditions are treated as baseline and may not be displayed.',
+    confidence: 'Medium (OEM disclosures are reliable but technology landscape is rapidly evolving)',
+    indicator: 'Component shortages are lagging; OEM lead times are leading',
     updated: 'Quarterly',
     limitations: 'Rapidly evolving technology landscape makes historical comparisons difficult.'
   },
@@ -55,6 +63,8 @@ const methodologyModules = [
     scope: 'Tier 1 and emerging Tier 2 data center markets.',
     normalization: 'Combines land pricing trends with the availability of "powered shell" or power-ready sites, primarily based on marketed asking prices and broker commentary.',
     labels: 'Constrained (no available power-ready sites), Elevated (high pricing and intense competition).',
+    confidence: 'Lower (Private land transactions lack transparent pricing and terms)',
+    indicator: 'Site control friction is lagging; land entitlement friction is leading',
     updated: 'Quarterly',
     limitations: 'Private land transactions often lack transparent pricing and terms, and many deals are negotiated off-market, which can obscure true clearing prices.'
   },
@@ -66,6 +76,8 @@ const methodologyModules = [
     scope: 'Primary and secondary US data center markets.',
     normalization: 'Tracks the delta between historical approval timelines and current cycles, factoring in local moratoriums or new regulatory hurdles.',
     labels: 'Constrained (active moratoriums or extreme delays), Elevated (increasing friction), Tightening (new regulations pending).',
+    confidence: 'Medium (Public filings are reliable but highly variable by municipality)',
+    indicator: 'Permit cycle delays are lagging; new regulatory hurdles are leading',
     updated: 'Quarterly',
     limitations: 'Highly variable by county and municipality; federal processes (e.g., FAST-41) can create parallel timelines that do not always align with local patterns.'
   },
@@ -77,6 +89,8 @@ const methodologyModules = [
     scope: 'Major US construction markets.',
     normalization: 'General construction labor data is filtered to isolate specialized trades (e.g., high-voltage electricians) critical to data centers.',
     labels: 'Limited (shortages impacting timelines), Tightening (wage inflation and reduced availability).',
+    confidence: 'Medium (Survey-based data and BLS indicators)',
+    indicator: 'Labor tightness is lagging; wage inflation is leading',
     updated: 'Quarterly',
     limitations: 'Labor mobility can temporarily alleviate local shortages, making it harder to distinguish short-term relief from structural tightness.'
   }
@@ -156,6 +170,16 @@ export const MonitorMethodology = () => {
           </div>
         </div>
 
+        {/* How to Read This Framework */}
+        <div className="bg-[#0f1a24]/50 border border-white/5 p-10 md:p-12 mb-16">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#3b82f6] mb-8 border-b border-white/5 pb-4">
+            How to Read This Framework
+          </h2>
+          <p className="text-sm text-slate-300 leading-relaxed">
+            The Constraint Monitor is a quarterly updated index synthesizing physical bottleneck pressure across AI infrastructure. It normalizes raw signals into comparable constraint scores using transparent frameworks. Each section below defines what is measured, how scores are derived, and the real-world implications of each status label.
+          </p>
+        </div>
+
         {/* Methodology Modules */}
         <div className="space-y-12">
           <h2 className="text-2xl font-bold text-white tracking-tight uppercase mb-8">
@@ -210,15 +234,36 @@ export const MonitorMethodology = () => {
                   <p className="text-sm text-slate-300 leading-relaxed border-l-2 border-[#3b82f6]/30 pl-4 italic">{mod.normalization}</p>
                 </div>
 
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Status Labels</h4>
+                  <p className="text-sm text-slate-300 leading-relaxed">{mod.labels}</p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
                   <div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Status Labels</h4>
-                    <p className="text-sm text-slate-300 leading-relaxed">{mod.labels}</p>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Confidence Interval</h4>
+                    <p className="text-sm text-slate-300 leading-relaxed">{mod.confidence}</p>
                   </div>
                   <div>
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Limitations</h4>
-                    <p className="text-sm text-slate-300 leading-relaxed">{mod.limitations}</p>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Indicator Type</h4>
+                    <p className="text-sm text-slate-300 leading-relaxed">{mod.indicator}</p>
                   </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Limitations</h4>
+                  <p className="text-sm text-slate-300 leading-relaxed">{mod.limitations}</p>
+                </div>
+
+                <div className="pt-6">
+                  <Link 
+                    to={`/${mod.title.toLowerCase().replace(' ', '-')}`}
+                    state={{ from: '/monitor/methodology', label: 'Back to Methodology' }}
+                    className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#3b82f6] hover:text-white transition-colors group"
+                  >
+                    View Full {mod.title} Constraint Details
+                    <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -226,9 +271,32 @@ export const MonitorMethodology = () => {
         </div>
       </div>
 
+      {/* Category Outlooks */}
+      <section className="max-w-[1600px] mx-auto px-6 py-24 border-t border-white/5">
+        <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mb-12">Category Outlooks</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
+          {['Power', 'Cooling', 'Water', 'Land', 'Permitting', 'Supply Chain', 'Labor'].map(cat => (
+            <Link 
+              key={cat} 
+              to={`/${cat.toLowerCase().replace(' ', '-')}`}
+              state={{ from: '/monitor/methodology', label: 'Back to Methodology' }}
+              className="p-8 bg-[#0f1a24]/50 border border-white/5 hover:border-[#3b82f6]/30 transition-all group text-center relative overflow-hidden"
+            >
+              {/* Topography Overlay */}
+              <div className="absolute inset-0 pointer-events-none opacity-[0.05] z-0 overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/Topo.Microchip.png')] bg-cover bg-center mix-blend-screen scale-[2]" />
+              </div>
+              <span className="relative z-10 text-[11px] font-bold text-slate-300 uppercase tracking-widest group-hover:text-white transition-colors">
+                {cat}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t border-white/5 py-12 px-6 mt-24">
-        <div className="max-w-[1000px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8 text-[9px] font-bold uppercase tracking-[0.3em] text-slate-600">
+      <footer className="border-t border-white/5 py-12 px-6 mt-12">
+        <div className="max-w-[1000px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8 text-[9px] font-bold uppercase tracking-[0.3em] text-slate-500">
           <div className="flex items-center gap-12">
             <span>© 2026 The Physical Layer</span>
             <span className="text-[#3b82f6]/30">Infrastructure Intelligence</span>

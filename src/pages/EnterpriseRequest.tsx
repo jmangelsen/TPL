@@ -68,10 +68,10 @@ export const EnterpriseRequest = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-[80vh] bg-tpl-bg flex items-center justify-center p-6">
-        <div className="max-w-2xl w-full bg-white p-12 border border-tpl-ink/10 shadow-xl text-center">
+      <div className="min-h-[80vh] bg-[#1a2633] flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full bg-[#0f1a24] p-12 border border-white/10 shadow-xl text-center">
           <h2 className="text-3xl font-bold mb-4">Request Received</h2>
-          <p className="text-tpl-slate text-lg leading-relaxed mb-8">
+          <p className="text-slate-300 text-lg leading-relaxed mb-8">
             Thank you. We’ve received your request and will follow up to schedule your first enterprise consultation within 2 business days.
           </p>
           <button 
@@ -86,51 +86,51 @@ export const EnterpriseRequest = () => {
   }
 
   return (
-    <div className="min-h-screen bg-tpl-bg py-16 md:py-24 px-6 font-sans">
+    <div className="min-h-screen bg-[#1a2633] py-16 md:py-24 px-6 font-sans">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-3xl md:text-5xl font-bold mb-6">Enterprise Access & Data Partnerships</h1>
-          <p className="text-tpl-slate text-lg leading-relaxed max-w-2xl mx-auto">
+          <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto">
             For governments, infrastructure investors, hyperscalers, and operators who need organization‑wide access or custom data integrations.
           </p>
-          <p className="text-tpl-slate text-lg leading-relaxed max-w-2xl mx-auto mt-2">
+          <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto mt-2">
             Share a few details and we’ll follow up to schedule your first consultation.
           </p>
         </div>
 
-        <div className="bg-white p-8 md:p-12 border border-tpl-ink/10 shadow-xl">
+        <div className="bg-[#0f1a24] p-8 md:p-12 border border-white/10 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-12">
             
             {/* 1. Contact Information */}
             <section>
-              <h3 className="text-lg font-bold mb-6 border-b border-tpl-ink/10 pb-2">1. Contact Information</h3>
+              <h3 className="text-lg font-bold mb-6 border-b border-white/10 pb-2">1. Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Full Name *</label>
-                  <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Full Name *</label>
+                  <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Work Email *</label>
-                  <input type="email" name="email" required value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Work Email *</label>
+                  <input type="email" name="email" required value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Company / Organization *</label>
-                  <input type="text" name="company" required value={formData.company} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Company / Organization *</label>
+                  <input type="text" name="company" required value={formData.company} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Job Title / Role *</label>
-                  <input type="text" name="role" required value={formData.role} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Job Title / Role *</label>
+                  <input type="text" name="role" required value={formData.role} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Country / Region</label>
-                  <input type="text" name="region" value={formData.region} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Country / Region</label>
+                  <input type="text" name="region" value={formData.region} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
               </div>
             </section>
 
             {/* 2. Organization Type */}
             <section>
-              <h3 className="text-lg font-bold mb-6 border-b border-tpl-ink/10 pb-2">2. Organization Type *</h3>
+              <h3 className="text-lg font-bold mb-6 border-b border-white/10 pb-2">2. Organization Type *</h3>
               <div className="space-y-3">
                 {['Government / Public sector', 'Private investor / asset manager', 'Data center operator / developer', 'Hyperscaler / large tech', 'Utility / grid operator', 'Vendor / OEM', 'Other'].map((type) => (
                   <label key={type} className="flex items-center cursor-pointer">
@@ -139,18 +139,18 @@ export const EnterpriseRequest = () => {
                   </label>
                 ))}
                 {formData.orgType === 'Other' && (
-                  <input type="text" name="orgTypeOther" placeholder="Please specify" value={formData.orgTypeOther} onChange={handleInputChange} className="w-full mt-2 px-4 py-2 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none text-sm" />
+                  <input type="text" name="orgTypeOther" placeholder="Please specify" value={formData.orgTypeOther} onChange={handleInputChange} className="w-full mt-2 px-4 py-2 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none text-sm" />
                 )}
               </div>
             </section>
 
             {/* 3. Scope & Use Case */}
             <section>
-              <h3 className="text-lg font-bold mb-6 border-b border-tpl-ink/10 pb-2">3. Scope & Use Case *</h3>
+              <h3 className="text-lg font-bold mb-6 border-b border-white/10 pb-2">3. Scope & Use Case *</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Approximate number of users/seats *</label>
-                  <select name="seats" required value={formData.seats} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Approximate number of users/seats *</label>
+                  <select name="seats" required value={formData.seats} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none">
                     <option value="">Select...</option>
                     <option value="1-5">1–5</option>
                     <option value="6-20">6–20</option>
@@ -160,7 +160,7 @@ export const EnterpriseRequest = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-3">Primary interests (select all that apply)</label>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-3">Primary interests (select all that apply)</label>
                   <div className="space-y-2">
                     {['Interconnection & grid constraints', 'Equipment / supply chain (transformers, switchgear, etc.)', 'Water & cooling risk', 'Land, permitting & local politics', 'Labor & construction capacity', 'Custom / other'].map((interest) => (
                       <label key={interest} className="flex items-center cursor-pointer">
@@ -169,24 +169,24 @@ export const EnterpriseRequest = () => {
                       </label>
                     ))}
                     {formData.interests.includes('Custom / other') && (
-                      <input type="text" name="interestOther" placeholder="Please specify" value={formData.interestOther} onChange={handleInputChange} className="w-full mt-2 px-4 py-2 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none text-sm" />
+                      <input type="text" name="interestOther" placeholder="Please specify" value={formData.interestOther} onChange={handleInputChange} className="w-full mt-2 px-4 py-2 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none text-sm" />
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">How do you intend to use TPL data and reporting? *</label>
-                  <textarea name="useCase" required rows={4} value={formData.useCase} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none resize-y" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">How do you intend to use TPL data and reporting? *</label>
+                  <textarea name="useCase" required rows={4} value={formData.useCase} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none resize-y" />
                 </div>
               </div>
             </section>
 
             {/* 4. Data & Integration Needs */}
             <section>
-              <h3 className="text-lg font-bold mb-6 border-b border-tpl-ink/10 pb-2">4. Data & Integration Needs</h3>
+              <h3 className="text-lg font-bold mb-6 border-b border-white/10 pb-2">4. Data & Integration Needs</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-3">Preferred access type</label>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-3">Preferred access type</label>
                   <div className="space-y-2">
                     {['Web portal / dashboards', 'API access for internal tools', 'CSV / bulk data exports', 'Custom briefings / workshops'].map((type) => (
                       <label key={type} className="flex items-center cursor-pointer">
@@ -197,19 +197,19 @@ export const EnterpriseRequest = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Existing tools you’d like to integrate with (e.g., GIS, internal dashboards, CRM)</label>
-                  <input type="text" name="tools" value={formData.tools} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Existing tools you’d like to integrate with (e.g., GIS, internal dashboards, CRM)</label>
+                  <input type="text" name="tools" value={formData.tools} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
               </div>
             </section>
 
             {/* 5. Timeline & Urgency */}
             <section>
-              <h3 className="text-lg font-bold mb-6 border-b border-tpl-ink/10 pb-2">5. Timeline & Urgency *</h3>
+              <h3 className="text-lg font-bold mb-6 border-b border-white/10 pb-2">5. Timeline & Urgency *</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Desired start timeline *</label>
-                  <select name="timeline" required value={formData.timeline} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Desired start timeline *</label>
+                  <select name="timeline" required value={formData.timeline} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none">
                     <option value="">Select...</option>
                     <option value="ASAP (this quarter)">ASAP (this quarter)</option>
                     <option value="Within 3–6 months">Within 3–6 months</option>
@@ -218,11 +218,11 @@ export const EnterpriseRequest = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Requested consultation window</label>
-                  <input type="text" name="consultationWindow" placeholder="e.g. Prefer mornings US Mountain Time" value={formData.consultationWindow} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Requested consultation window</label>
+                  <input type="text" name="consultationWindow" placeholder="e.g. Prefer mornings US Mountain Time" value={formData.consultationWindow} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-3">Urgency level *</label>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-3">Urgency level *</label>
                   <div className="flex gap-6">
                     {['Low', 'Medium', 'High – project already in motion'].map((level) => (
                       <label key={level} className="flex items-center cursor-pointer">
@@ -237,11 +237,11 @@ export const EnterpriseRequest = () => {
 
             {/* 6. Budget & Decision Process */}
             <section>
-              <h3 className="text-lg font-bold mb-6 border-b border-tpl-ink/10 pb-2">6. Budget & Decision Process</h3>
+              <h3 className="text-lg font-bold mb-6 border-b border-white/10 pb-2">6. Budget & Decision Process</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Approximate annual budget range</label>
-                  <select name="budget" value={formData.budget} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Approximate annual budget range</label>
+                  <select name="budget" value={formData.budget} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none">
                     <option value="">Select...</option>
                     <option value="Undisclosed">Undisclosed</option>
                     <option value="< $25k">&lt; $25k</option>
@@ -250,18 +250,18 @@ export const EnterpriseRequest = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Decision-making structure (Who is involved?)</label>
-                  <input type="text" name="decisionProcess" value={formData.decisionProcess} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Decision-making structure (Who is involved?)</label>
+                  <input type="text" name="decisionProcess" value={formData.decisionProcess} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none" />
                 </div>
               </div>
             </section>
 
             {/* 7. Additional Context */}
             <section>
-              <h3 className="text-lg font-bold mb-6 border-b border-tpl-ink/10 pb-2">7. Additional Context</h3>
+              <h3 className="text-lg font-bold mb-6 border-b border-white/10 pb-2">7. Additional Context</h3>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-tpl-ink mb-2">Anything else we should know before the first call?</label>
-                <textarea name="notes" rows={3} value={formData.notes} onChange={handleInputChange} className="w-full px-4 py-3 bg-tpl-bg border border-tpl-ink/20 focus:border-tpl-ink focus:outline-none resize-y" />
+                <label className="block text-xs font-bold uppercase tracking-widest text-white mb-2">Anything else we should know before the first call?</label>
+                <textarea name="notes" rows={3} value={formData.notes} onChange={handleInputChange} className="w-full px-4 py-3 bg-[#1a2633] border border-white/20/20 focus:border-white/20 focus:outline-none resize-y" />
               </div>
             </section>
 
@@ -269,7 +269,7 @@ export const EnterpriseRequest = () => {
             <section className="pt-4">
               <label className="flex items-start cursor-pointer">
                 <input type="checkbox" name="consent" required checked={formData.consent} onChange={(e) => setFormData(prev => ({ ...prev, consent: e.target.checked }))} className="mt-1 mr-3" />
-                <span className="text-sm text-tpl-slate">I agree to be contacted by The Physical Layer regarding enterprise access and related services. *</span>
+                <span className="text-sm text-slate-300">I agree to be contacted by The Physical Layer regarding enterprise access and related services. *</span>
               </label>
             </section>
 

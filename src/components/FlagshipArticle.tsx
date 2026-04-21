@@ -5,11 +5,10 @@ import { SubscribeForm } from './SubscribeForm';
 import { DeepAnalysis } from './DeepAnalysis';
 
 interface FlagshipArticleProps {
-  isSubscribed: boolean;
   user: any;
 }
 
-export const FlagshipArticle: React.FC<FlagshipArticleProps> = ({ isSubscribed, user }) => {
+export const FlagshipArticle: React.FC<FlagshipArticleProps> = ({ user }) => {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -39,14 +38,6 @@ export const FlagshipArticle: React.FC<FlagshipArticleProps> = ({ isSubscribed, 
               <p className="text-xl md:text-3xl font-serif italic text-tpl-slate leading-snug max-w-2xl">
                 The physical layer of the AI revolution is being decided by cooling loops, electric load, and municipal approvals.
               </p>
-              <div className="shrink-0">
-                <DeepAnalysis 
-                  title="AI Watershed Problem" 
-                  content="This article discusses the massive water consumption of AI data centers, reaching up to 5 million gallons per day. It explores the tension between digital ambition and local resource constraints, the engineering challenges of high-density cooling, and the political/governance dynamics like the Dillon Rule."
-                  isSubscribed={isSubscribed}
-                  user={user}
-                />
-              </div>
             </div>
           </header>
 

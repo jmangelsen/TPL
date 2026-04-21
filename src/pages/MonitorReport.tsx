@@ -3,7 +3,7 @@ import { ArrowLeft, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { signInWithGoogle } from '../firebase';
 
-export const MonitorReport = ({ user, isSubscribed }: { user: any, isSubscribed: boolean }) => {
+export const MonitorReport = ({ user }: { user: any }) => {
   const isGated = !user;
 
   return (
@@ -48,7 +48,7 @@ export const MonitorReport = ({ user, isSubscribed }: { user: any, isSubscribed:
           </p>
           
           <div className="relative">
-            <div className={`space-y-12 ${!isSubscribed ? 'max-h-[600px] overflow-hidden' : ''}`}>
+            <div className="space-y-12">
               <section className="space-y-6">
                 <h2 className="text-lg font-bold text-white uppercase tracking-widest border-b border-white/5 pb-4">1. Power & Grid</h2>
                 <p className="text-sm text-slate-400 leading-relaxed">
@@ -148,33 +148,7 @@ export const MonitorReport = ({ user, isSubscribed }: { user: any, isSubscribed:
               </section>
             </div>
 
-            {!isSubscribed && (
-              <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-[#1a2633]/90 to-[#1a2633] backdrop-blur-[1px] flex flex-col items-center justify-end pb-8">
-                <div className="bg-[#0f1a24] border border-white/10 p-8 max-w-md w-full text-center shadow-2xl">
-                  <div className="w-12 h-12 bg-[#3b82f6]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Lock className="w-5 h-5 text-[#3b82f6]" />
-                  </div>
-                  <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em] mb-4">Restricted Intelligence</h3>
-                  <p className="text-sm text-slate-400 mb-8 leading-relaxed">
-                    The full Q2 2026 Constraint Monitor Report is available to paid subscribers.
-                  </p>
-                  <div className="space-y-4">
-                    <button 
-                      onClick={!user ? signInWithGoogle : undefined}
-                      className="w-full py-4 bg-[#3b82f6] text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-[#2563eb] transition-all"
-                    >
-                      Subscribe Level 1 Access - $10.99/Month
-                    </button>
-                    <button 
-                      onClick={!user ? signInWithGoogle : undefined}
-                      className="w-full py-4 bg-transparent border border-white/20 text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-white/5 transition-all"
-                    >
-                      Unlock Current Report - $5.99
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+
           </div>
         </div>
       </div>

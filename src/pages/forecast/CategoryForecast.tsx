@@ -7,9 +7,10 @@ import { CategoryForecastChart } from '../../components/monitor/CategoryForecast
 import { useEffectiveTier } from '../../hooks/useEffectiveTier';
 import { ArrowLeft, Lock } from 'lucide-react';
 
-export const CategoryForecast = ({ user, isSubscribed }: { user: any, isSubscribed: boolean }) => {
+export const CategoryForecast = ({ user, isSubscribed, slug }: { user: any, isSubscribed: boolean, slug?: string }) => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
-  const category = FORECAST_CATEGORIES.find(c => c.slug === categorySlug);
+  const activeSlug = slug || categorySlug;
+  const category = FORECAST_CATEGORIES.find(c => c.slug === activeSlug);
   
   const [scenarioId, setScenarioId] = useState<ScenarioId>('baseline');
 
@@ -61,7 +62,7 @@ export const CategoryForecast = ({ user, isSubscribed }: { user: any, isSubscrib
 
             {/* Scenario Selector - Only show if they have access */}
             {canViewForecast && (
-              <div className="bg-[#0f1a24]/50 border border-white/5 p-6 min-w-[200px]">
+              <div className="bg-[#0f1a24] border border-white/5 p-6 min-w-[200px]">
                 <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-4">Scenario</div>
                 <select
                   value={scenarioId}
@@ -80,19 +81,19 @@ export const CategoryForecast = ({ user, isSubscribed }: { user: any, isSubscrib
 
       <div className="max-w-5xl mx-auto px-6 py-12 z-10 relative">
         {!canViewForecast && (
-          <div className="bg-[#0f1a24]/50 border border-white/5 p-12 relative overflow-hidden">
+          <div className="bg-[#0f1a24] border border-white/5 p-12 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#1a2633]/90 z-10" />
             
             {/* Blurred background content to show what they are missing */}
             <div className="relative z-0 opacity-20 blur-[3px] select-none pointer-events-none">
               <div className="grid gap-6 mb-12">
-                <div className="h-64 bg-white/5 border border-white/10"></div>
-                <div className="h-64 bg-white/5 border border-white/10"></div>
+                <div className="h-64 bg-[#0f1a24]/5 border border-white/10"></div>
+                <div className="h-64 bg-[#0f1a24]/5 border border-white/10"></div>
               </div>
             </div>
 
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-6">
-              <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
+              <div className="w-12 h-12 bg-[#0f1a24]/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
                 <Lock size={20} className="text-slate-400" />
               </div>
               <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-widest">Pro Subscription Required</h3>
@@ -110,7 +111,7 @@ export const CategoryForecast = ({ user, isSubscribed }: { user: any, isSubscrib
           <div className="space-y-12">
             <section className="grid gap-6">
               {indicators.map(ind => (
-                <div key={ind.indicatorId} className="bg-[#0f1a24]/50 border border-white/5 p-8">
+                <div key={ind.indicatorId} className="bg-[#0f1a24] border border-white/5 p-8">
                   <CategoryForecastChart
                     indicator={ind}
                     scenarioId={scenarioId}

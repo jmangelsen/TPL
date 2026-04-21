@@ -1,4 +1,4 @@
-export type ForecastCategoryId = 'power' | 'water' | 'permitting' | 'supply_chain' | 'labor';
+export type ForecastCategoryId = 'power' | 'water' | 'cooling' | 'permitting' | 'supply_chain' | 'labor';
 
 export type ForecastCategory = {
   id: ForecastCategoryId;
@@ -12,23 +12,31 @@ export type ForecastCategory = {
 export const FORECAST_CATEGORIES: ForecastCategory[] = [
   {
     id: 'power',
-    slug: 'power-forecast',
+    slug: 'power',
     name: 'Power & Grid Outlook',
     heroKicker: 'Constraint Outlook',
     description: 'Forward view on grid queues, interconnection timelines, and power availability in major AI data center markets.',
     relatedIndicators: ['grid_queue', 'transformer_backlog', 'power_price_pressure'],
   },
   {
-    id: 'water',
-    slug: 'water-forecast',
-    name: 'Water & Cooling Outlook',
+    id: 'cooling',
+    slug: 'cooling',
+    name: 'Cooling & Thermal Outlook',
     heroKicker: 'Constraint Outlook',
-    description: 'Forward view on water stress, cooling risk, and regulatory pressure for high-density sites.',
-    relatedIndicators: ['water_risk', 'cooling_capacity', 'water_policy_pressure'],
+    description: 'Forward view on thermal management, liquid-to-chip transitions, and HVAC supply chain pressure.',
+    relatedIndicators: ['cooling_capacity', 'thermal_design_limits'],
+  },
+  {
+    id: 'water',
+    slug: 'water',
+    name: 'Water & Ecological Outlook',
+    heroKicker: 'Constraint Outlook',
+    description: 'Forward view on water stress, municipal allocation, and regulatory pressure for high-density sites.',
+    relatedIndicators: ['water_risk', 'water_policy_pressure'],
   },
   {
     id: 'permitting',
-    slug: 'permitting-forecast',
+    slug: 'permitting',
     name: 'Permitting & Land Use Outlook',
     heroKicker: 'Constraint Outlook',
     description: 'Forward view on permit cycles, land approvals, and zoning headwinds for new data center builds.',
@@ -36,7 +44,7 @@ export const FORECAST_CATEGORIES: ForecastCategory[] = [
   },
   {
     id: 'supply_chain',
-    slug: 'supply-chain-forecast',
+    slug: 'supply-chain',
     name: 'Equipment & Supply Chain Outlook',
     heroKicker: 'Constraint Outlook',
     description: 'Forward view on transformer lead times, switchgear backlog, and specialty equipment availability.',
@@ -44,7 +52,7 @@ export const FORECAST_CATEGORIES: ForecastCategory[] = [
   },
   {
     id: 'labor',
-    slug: 'labor-forecast',
+    slug: 'labor',
     name: 'Labor & Construction Outlook',
     heroKicker: 'Constraint Outlook',
     description: 'Forward view on labor availability, wage pressure, and construction capacity.',

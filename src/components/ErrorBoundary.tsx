@@ -1,4 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 interface Props {
   children: ReactNode;
@@ -21,15 +23,23 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
+    
+    // Log error to Firestore
+    addDoc(collection(db, 'site_errors'), {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      url: window.location.href
+    }).catch(err => console.error("Failed to log error to Firestore:", err));
   }
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-tpl-bg flex items-center justify-center p-6 text-center">
+        <div className="min-h-screen bg-[#1a2633] flex items-center justify-center p-6 text-center">
           <div className="max-w-md space-y-6">
             <h1 className="text-4xl font-bold tracking-tight uppercase">Something went wrong</h1>
-            <p className="text-tpl-slate font-serif italic">
+            <p className="text-slate-300 font-serif italic">
               The application encountered an unexpected error. Please try refreshing the page.
             </p>
             <button
@@ -39,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Reload Application
             </button>
             {process.env.NODE_ENV === 'development' && (
-              <pre className="mt-8 p-4 bg-tpl-ink/5 text-left text-[10px] overflow-auto max-h-48 border border-tpl-ink/10">
+              <pre className="mt-8 p-4 bg-tpl-ink/5 text-left text-[10px] overflow-auto max-h-48 border border-white/10">
                 {this.state.error?.message}
               </pre>
             )}

@@ -28,24 +28,26 @@ import {
   Activity,
   Shield
 } from 'lucide-react';
+import { TopoTile } from './components/ui/TopoTile';
 import { Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Glossary } from './components/Glossary';
 import { LandingPage } from './components/LandingPage';
 import { FlagshipArticle } from './components/FlagshipArticle';
 import { OperatorReports } from './components/OperatorReports';
+import { SubscribePage } from './pages/SubscribePage';
 import { SubscribeForm } from './components/SubscribeForm';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AdminDashboard } from './components/AdminDashboard';
-import { ResearchAssistant } from './components/ResearchAssistant';
+import { AdminMapProjects } from './pages/admin/MapProjects';
 import { IntelligenceArchive } from './components/IntelligenceArchive';
 import { ConstraintMonitor } from './components/ConstraintMonitor';
 import { MonitorMethodology } from './pages/MonitorMethodology';
 import { MonitorReport } from './pages/MonitorReport';
 import { Paywall } from './components/Paywall';
+import { runEarlyAccessSummaryReport } from './lib/cron';
 import { auth, db, signInWithGoogle } from './firebase';
-import { doc, getDoc } from 'firebase/firestore/lite';
+import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
-import { PlanCard } from './components/pricing/PlanCard';
 import { Signup } from './pages/Signup';
 import { Login } from './pages/Login';
 import { EnterpriseRequest } from './pages/EnterpriseRequest';
@@ -59,15 +61,38 @@ import { EnterpriseLayout } from './components/enterprise/EnterpriseLayout';
 import { EnterpriseGuard } from './components/enterprise/EnterpriseGuard';
 import { Q2Report } from './pages/enterprise/Q2Report';
 import { MarketTrackerHub } from './pages/tracker/MarketTrackerHub';
+import { BuildoutTrackerHub } from './pages/tracker/BuildoutTrackerHub';
+import { EvidenceSectorPage } from './pages/tracker/EvidenceSectorPage';
 import { CompanyDetail } from './pages/tracker/CompanyDetail';
 import { ForecastIndex } from './pages/forecast/ForecastIndex';
 import { CategoryForecast } from './pages/forecast/CategoryForecast';
+import { ConstraintMap } from './pages/ConstraintMap';
+import { GroundTruth } from './pages/GroundTruth';
+import { InfrastructureMap } from './components/map/InfrastructureMap';
+import { MapLayoutShell } from './components/map/MapLayoutShell';
+import { GroundTruthChildPage } from './pages/GroundTruthChildPage';
+import { MarketDossier } from './pages/MarketDossier';
+import { InteractiveConstraintMap } from './pages/InteractiveConstraintMap';
+import { FailureCaseStudies } from './pages/FailureCaseStudies';
+import { MidwestAICampusPage } from './pages/failures/MidwestAICampusPage';
+import { MarketConstraintOutlook } from './pages/MarketConstraintOutlook';
 
+import { PowerOutlook } from './pages/outlook/PowerOutlook';
+import { CoolingOutlook } from './pages/outlook/CoolingOutlook';
+import { WaterOutlook } from './pages/outlook/WaterOutlook';
+import { PermittingOutlook } from './pages/outlook/PermittingOutlook';
+import { SupplyChainOutlook } from './pages/outlook/SupplyChainOutlook';
+import { LaborOutlook } from './pages/outlook/LaborOutlook';
+import { ConstraintDetail } from './pages/constraints/ConstraintDetail';
+import { ConstraintMonitorChild } from './pages/constraints/ConstraintMonitorChild';
+
+import { LiveIntelligencePanel } from './components/LiveIntelligencePanel';
 import { Sitemap } from './pages/Sitemap';
 
 const Navbar = ({ isAdmin, user }: { isAdmin: boolean, user: any }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
   const navigate = useNavigate();
@@ -84,10 +109,18 @@ const Navbar = ({ isAdmin, user }: { isAdmin: boolean, user: any }) => {
 
   const navLinks = [
     { name: 'Research', path: '/article' },
-    { name: 'Monitor', path: '/monitor' },
-    { name: 'Tracker', path: '/market-tracker' },
-    { name: 'Reports', path: '/reports' },
-    { name: 'About', path: '/about' },
+    { name: 'Tracker', path: '/buildout-tracker' },
+    { name: 'Map', path: '/map' },
+    { name: 'Constraint Atlas', path: '/constraint-atlas' },
+    { name: 'Ground Truth', path: '/ground-truth' },
+    { 
+      name: 'Info', 
+      dropdown: [
+        { name: 'Monitor', path: '/monitor' },
+        { name: 'Reports', path: '/reports' },
+        { name: 'About', path: '/about' },
+      ]
+    },
   ];
 
   const isDarkNavPage = true;
@@ -105,26 +138,69 @@ const Navbar = ({ isAdmin, user }: { isAdmin: boolean, user: any }) => {
           to="/"
           className="flex items-center gap-3 hover:opacity-80 transition-opacity group"
         >
-          <span className="font-condensed font-bold text-xl tracking-tight uppercase leading-none text-white">The Physical Layer</span>
+          <div className="flex flex-col font-condensed font-bold text-[13px] leading-[0.9] tracking-tight uppercase text-white">
+            <span>The</span>
+            <span>Physical</span>
+            <span>Layer</span>
+          </div>
         </Link>
 
         {/* Center Navigation: Desktop */}
         <div className="hidden md:flex items-center gap-14">
           {navLinks.map((link) => (
-            <Link 
-              key={link.name}
-              to={link.path}
-              className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-300 relative group ${
-                currentPath === link.path 
-                  ? 'text-white' 
-                  : 'text-white/70 hover:text-white'
-              }`}
-            >
-              {link.name}
-              <span className={`absolute -bottom-1 left-0 w-full h-px transition-transform duration-300 origin-left ${
-                currentPath === link.path ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-              } bg-white`} />
-            </Link>
+            link.dropdown ? (
+              <div key={link.name} className="relative">
+                <button
+                  onClick={() => setIsInfoOpen(!isInfoOpen)}
+                  className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-300 relative group flex items-center gap-1 ${
+                    link.dropdown.some(d => currentPath === d.path)
+                      ? 'text-white'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  {link.name}
+                  <ChevronDown size={10} className={`transition-transform duration-300 ${isInfoOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {isInfoOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full left-0 mt-2 w-32 bg-black/90 border border-white/10 rounded-sm py-2"
+                    >
+                      {link.dropdown.map(d => (
+                        <Link
+                          key={d.name}
+                          to={d.path}
+                          onClick={() => setIsInfoOpen(false)}
+                          className={`block px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors ${
+                            currentPath === d.path ? 'text-white' : 'text-white/70 hover:text-white'
+                          }`}
+                        >
+                          {d.name}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link 
+                key={link.name}
+                to={link.path}
+                className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-all duration-300 relative group ${
+                  currentPath === link.path 
+                    ? 'text-white' 
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                {link.name}
+                <span className={`absolute -bottom-1 left-0 w-full h-px transition-transform duration-300 origin-left ${
+                  currentPath === link.path ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                } bg-white`} />
+              </Link>
+            )
           ))}
         </div>
 
@@ -242,16 +318,36 @@ const Navbar = ({ isAdmin, user }: { isAdmin: boolean, user: any }) => {
             className="md:hidden bg-black border-b border-white/10 px-6 py-8 flex flex-col gap-6 shadow-xl overflow-hidden"
           >
             {navLinks.map((link) => (
-              <Link 
-                key={link.name}
-                to={link.path}
-                onClick={() => setIsOpen(false)} 
-                className={`text-sm font-bold uppercase tracking-[0.2em] py-2 border-b border-white/10 ${
-                  currentPath === link.path ? 'text-white' : 'text-white/70'
-                }`}
-              >
-                {link.name}
-              </Link>
+              link.dropdown ? (
+                <div key={link.name} className="flex flex-col gap-2">
+                  <span className="text-sm font-bold uppercase tracking-[0.2em] text-white/50 py-2 border-b border-white/10">
+                    {link.name}
+                  </span>
+                  {link.dropdown.map(d => (
+                    <Link
+                      key={d.name}
+                      to={d.path}
+                      onClick={() => setIsOpen(false)}
+                      className={`text-sm font-bold uppercase tracking-[0.2em] py-2 pl-4 ${
+                        currentPath === d.path ? 'text-white' : 'text-white/70'
+                      }`}
+                    >
+                      {d.name}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Link 
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)} 
+                  className={`text-sm font-bold uppercase tracking-[0.2em] py-2 border-b border-white/10 ${
+                    currentPath === link.path ? 'text-white' : 'text-white/70'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              )
             ))}
             
             <div className="flex flex-col gap-4 pt-4">
@@ -306,31 +402,33 @@ const Navbar = ({ isAdmin, user }: { isAdmin: boolean, user: any }) => {
   );
 };
 
-const TopicCard = ({ icon: Icon, title, description }: { icon: any, title: string, description: string }) => (
-  <div className="group p-6 md:p-8 border border-tpl-ink/10 hover:border-tpl-ink/30 transition-all duration-300 bg-white/50">
-    <div className="mb-4 md:mb-6 text-tpl-slate group-hover:text-tpl-accent transition-colors">
-      <Icon size={28} md:size={32} strokeWidth={1.5} />
-    </div>
-    <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3">{title}</h3>
-    <p className="text-tpl-slate text-xs md:text-sm leading-relaxed">
-      {description}
-    </p>
-  </div>
-);
-
-const WhySection = ({ title, description, role }: { title: string, description: string, role: string }) => (
-  <div className="flex flex-col gap-4">
-    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-tpl-steel">{role}</span>
-    <h3 className="text-xl font-bold">{title}</h3>
-    <p className="text-tpl-slate text-sm leading-relaxed">{description}</p>
-  </div>
-);
-
 const Home = () => {
   const navigate = useNavigate();
   return (
     <>
       <LandingPage />
+      
+      <LiveIntelligencePanel embedReady={false} />
+      
+      {/* MAP TEASER */}
+      <section className="py-16 md:py-24 px-6 bg-[#0F0C08] border-b border-tpl-ink/10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="aspect-[16/10] bg-tpl-ink border border-tpl-ink/20 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-20">
+              <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle, #C49A52 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+            </div>
+            <span className="text-tpl-steel text-[10px] uppercase tracking-widest">Map Preview</span>
+          </div>
+          <div className="space-y-6">
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--gt-accent)]">INFRASTRUCTURE MAP</span>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">The grid, the data centers, and the gaps between them.</h2>
+            <p className="text-white/70 leading-relaxed">Every transmission line, substation, power plant, and proposed AI campus — mapped against TPL's constraint intelligence. Built on public grid data from EIA and HIFLD.</p>
+            <Link to="/map" className="inline-block px-8 py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-colors">
+              OPEN MAP →
+            </Link>
+          </div>
+        </div>
+      </section>
       
       {/* TOPICS SECTION */}
       <section id="topics" className="py-12 md:py-24 px-6 border-y border-tpl-ink/5">
@@ -339,53 +437,88 @@ const Home = () => {
             <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-tpl-steel mb-3 md:mb-4 block">Core Research Areas</span>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">The Constraints of Scale</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-tpl-ink/10 border border-tpl-ink/10">
-            <TopicCard 
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-tpl-ink/10 border border-tpl-ink/10 relative overflow-hidden">
+            <TopoTile 
+              index={0}
+              total={9}
               icon={Droplets}
               title="Hydrological Load"
               description="Analyzing the 5 million gallon daily evaporation rate of hyperscale cooling loops."
             />
-            <TopicCard 
+            <TopoTile 
+              index={1}
+              total={9}
               icon={Zap}
               title="Grid Resilience"
               description="The transition from passive consumers to active grid participants and micro-nuclear integration."
             />
-            <TopicCard 
+            <TopoTile 
+              index={2}
+              total={9}
               icon={Globe}
               title="Land Governance"
               description="How the Dillon Rule and local zoning are becoming the ultimate bottlenecks for AI expansion."
             />
-            <TopicCard 
+            <TopoTile 
+              index={3}
+              total={9}
               icon={Droplets}
               title="Water"
               description="Analysis of evaporative cooling requirements and the mounting pressure on local municipal water systems."
             />
-            <TopicCard 
+            <TopoTile 
+              index={4}
+              total={9}
               icon={Zap}
               title="Power"
               description="Tracking grid interconnection queues, baseload requirements, and the shift toward behind-the-meter generation."
             />
-            <TopicCard 
+            <TopoTile 
+              index={5}
+              total={9}
               icon={Wind}
               title="Cooling"
               description="Technical deep-dives into liquid-to-chip transitions and the thermal management of high-density compute."
             />
-            <TopicCard 
+            <TopoTile 
+              index={6}
+              total={9}
               icon={MapIcon}
               title="Land"
               description="The geography of compute: identifying viable parcels with the rare combination of fiber, power, and zoning."
             />
-            <TopicCard 
+            <TopoTile 
+              index={7}
+              total={9}
               icon={FileText}
               title="Permitting"
               description="Navigating the complex landscape of environmental impact reports and local zoning board approvals."
             />
-            <TopicCard 
+            <TopoTile 
+              index={8}
+              total={9}
               icon={HardHat}
               title="Construction Risk"
               description="Supply chain bottlenecks for long-lead items like transformers, switchgear, and specialized labor."
             />
           </div>
+        </div>
+      </section>
+
+      {/* EDITORIAL / MISSION */}
+      <section className="py-16 md:py-24 px-6 bg-tpl-bg border-y border-tpl-ink/10">
+        <div className="flex flex-col items-center justify-center max-w-3xl mx-auto text-center">
+          <p className="text-lg md:text-2xl font-serif italic leading-snug text-tpl-slate mb-8">
+            Mapping the collision between digital ambition and physical reality. 
+            An evidence-driven analysis of water stress, power load, and land availability.
+          </p>
+          <Link 
+            to="/article"
+            className="group flex items-center justify-center gap-6 bg-tpl-ink text-tpl-bg px-8 md:px-10 py-4 md:py-5 rounded-none hover:bg-tpl-accent transition-all duration-500 shadow-xl w-full md:w-auto"
+          >
+            <span className="font-display font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs">Read Flagship Article</span>
+            <ArrowRight className="group-hover:translate-x-2 transition-transform" size={20} />
+          </Link>
         </div>
       </section>
 
@@ -433,25 +566,62 @@ const Home = () => {
       {/* WHY IT MATTERS SECTION */}
       <section className="py-16 md:py-24 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
-            <WhySection 
-              role="For Operators"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 relative overflow-hidden">
+            <TopoTile 
+              index={0}
+              total={3}
+              eyebrow="For Operators"
               title="Project Viability"
               description="Understand the physical bottlenecks that can stall a project for years, from grid queues to local water moratoriums."
             />
-            <WhySection 
-              role="For Investors"
+            <TopoTile 
+              index={1}
+              total={3}
+              eyebrow="For Investors"
               title="Hidden Risk"
               description="Infrastructure burdens create tail risks that aren't visible in software-centric valuation models."
             />
-            <WhySection 
-              role="For Communities"
-              title="Local Impact"
-              description="Analysis of how large-scale industrial compute reshapes local economies, resources, and governance."
+            <TopoTile 
+              index={2}
+              total={3}
+              eyebrow="Ground Truth"
+              title="What's Happening in Your Community"
+              description="Proposed data centers, community water impact, grid pressure, and early warning signals — mapped for the people who live there. EXPLORE GROUND TRUTH →"
+              href="/ground-truth"
             />
           </div>
         </div>
       </section>
+
+      {/* Subscribe Funnel */}
+      <div id="contact-funnel" className="bg-tpl-ink p-8 md:p-16 text-tpl-bg text-center space-y-8 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-tpl-accent z-20" />
+        
+        {/* Topography Overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
+          <div className="absolute inset-0 bg-[url('/Topo.Microchip.png')] bg-cover bg-center mix-blend-screen scale-[4] blur-sm" />
+        </div>
+
+        <div className="max-w-2xl mx-auto space-y-6 relative z-10">
+          <h2 className="text-2xl md:text-5xl font-bold tracking-tight leading-none uppercase">
+            The Infrastructure <br className="hidden md:block"/> Intelligence Report
+          </h2>
+          <p className="text-white/60 font-serif italic text-base md:text-lg leading-relaxed">
+            Operators, developers, and decision-makers: get the first-mover briefings on physical constraints, vendor positioning, and project bottlenecks before they hit mainstream coverage. Early access only.
+          </p>
+          <div className="pt-2">
+            <SubscribeForm />
+          </div>
+          <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.3em] text-tpl-accent">
+            Subscriber-Only Intelligence // Delivered Weekly
+          </p>
+        </div>
+        
+        {/* Decorative Grid */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+        </div>
+      </div>
     </>
   );
 };
@@ -540,36 +710,27 @@ const GetAccess = () => (
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto mb-24">
-        <PlanCard
-          name="Essentials"
-          price="$10.99"
-          priceUnit="/month"
-          description="Current-cycle access for focused readers."
-          features={[
-            "All current-quarter research reports",
-            "Current-quarter Constraint Monitor overview",
-            "Email alerts when new briefs and reports publish",
-            "Light archive access (recent 1–2 quarters of select reports)"
-          ]}
-          ctaLabel="Get Essentials"
-          tier="essentials"
-        />
-        <PlanCard
-          name="Pro"
-          price="$29.99"
-          priceUnit="/month"
-          description="Full-cycle visibility for active operators."
-          features={[
-            "Everything in Essentials",
-            "Full archive of past quarterly reports (as available)",
-            "Full Constraint Monitor history and methodology notes",
-            "Quarterly change log: what moved and why",
-            "Priority response on research and clarification requests"
-          ]}
-          ctaLabel="Get Pro"
-          tier="pro"
-          highlight
-        />
+        <div className="p-8 border border-tpl-ink/10 bg-tpl-bg">
+          <h3 className="text-xl font-bold mb-4">Insight Access</h3>
+          <p className="text-tpl-slate mb-6">Current-cycle access for focused readers.</p>
+          <ul className="space-y-3 text-sm text-tpl-slate mb-8">
+            <li>All current-quarter research reports</li>
+            <li>Current-quarter Constraint Monitor overview</li>
+            <li>Email alerts when new briefs and reports publish</li>
+            <li>Light archive access</li>
+          </ul>
+        </div>
+        <div className="p-8 border border-tpl-accent bg-tpl-bg">
+          <h3 className="text-xl font-bold mb-4">Strategy Access</h3>
+          <p className="text-tpl-slate mb-6">Full-cycle visibility for active operators.</p>
+          <ul className="space-y-3 text-sm text-tpl-slate mb-8">
+            <li>Everything in Essentials</li>
+            <li>Full archive of past quarterly reports</li>
+            <li>Full Constraint Monitor history</li>
+            <li>Quarterly change log</li>
+            <li>Priority response on research requests</li>
+          </ul>
+        </div>
       </div>
 
       <div className="max-w-xl mx-auto text-center border-t border-tpl-ink/10 pt-16">
@@ -592,7 +753,6 @@ const GetAccess = () => (
 export default function App() {
   const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -600,51 +760,37 @@ export default function App() {
   const isDarkNavPage = true;
 
   useEffect(() => {
-    // Check URL parameters for Stripe success
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success')) {
-      setIsSubscribed(true);
-      navigate('/intelligence');
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    runEarlyAccessSummaryReport(isAdmin);
 
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
       setUser(u);
       if (u) {
-        // Check if user is admin or subscribed in Firestore
+        // Check if user is admin in Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', u.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
             if (data.role === 'admin') {
               setIsAdmin(true);
-              setIsSubscribed(true); // Admins get access to research tools
             } else {
               setIsAdmin(false);
-              setIsSubscribed(!!data.isSubscribed);
             }
           } else if (isAdminEmail(u.email)) {
             // Default admin check
             setIsAdmin(true);
-            setIsSubscribed(true);
           } else {
             setIsAdmin(false);
-            setIsSubscribed(false);
           }
         } catch (e) {
           // Fallback to email check if Firestore fails (e.g. rules)
           if (isAdminEmail(u.email)) {
             setIsAdmin(true);
-            setIsSubscribed(true);
           } else {
             setIsAdmin(false);
-            setIsSubscribed(false);
           }
         }
       } else {
         setIsAdmin(false);
-        setIsSubscribed(false);
         if (location.pathname === '/admin') navigate('/');
       }
     });
@@ -663,9 +809,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  const effectiveTier = useEffectiveTier(isSubscribed ? 'pro' : 'free', user?.email || undefined);
-  const effectiveIsSubscribed = effectiveTier === 'essentials' || effectiveTier === 'pro' || effectiveTier === 'admin';
-  const effectiveIsAdmin = effectiveTier === 'admin';
+  const effectiveIsAdmin = isAdmin;
 
   return (
     <ErrorBoundary>
@@ -680,7 +824,10 @@ export default function App() {
           <Route index element={<Navigate to="q2-2026" replace />} />
         </Route>
 
+import { MapLayoutShell } from './components/map/MapLayoutShell';
+// ...
         {/* Main Site Routes */}
+        <Route path="/map" element={<MapLayoutShell />} />
         <Route path="*" element={
           <div className="min-h-screen selection:bg-tpl-accent selection:text-white">
             <Navbar 
@@ -688,30 +835,78 @@ export default function App() {
               user={user}
             />
             <Glossary isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />
-            <ResearchAssistant isSubscribed={effectiveIsSubscribed} />
 
             <main className="pt-20">
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/article" element={<FlagshipArticle isSubscribed={effectiveIsSubscribed} user={user} />} />
+                <Route path="/article" element={<FlagshipArticle user={user} />} />
                 <Route path="/reports" element={<OperatorReports />} />
-                <Route path="/monitor" element={<ConstraintMonitor user={user} isSubscribed={effectiveIsSubscribed} />} />
+                <Route path="/monitor" element={<ConstraintMonitor user={user} />} />
                 <Route path="/monitor/methodology" element={<MonitorMethodology />} />
-                <Route path="/monitor/report" element={<MonitorReport user={user} isSubscribed={effectiveIsSubscribed} />} />
-                <Route path="/market-tracker" element={<MarketTrackerHub />} />
+                <Route path="/monitor/report" element={<MonitorReport user={user} />} />
+                <Route path="/buildout-tracker" element={<BuildoutTrackerHub />} />
+                <Route path="/evidence/:sectorSlug" element={<EvidenceSectorPage />} />
+                <Route path="/market-tracker" element={effectiveIsAdmin ? <MarketTrackerHub /> : <Navigate to="/" replace />} />
                 <Route path="/market-tracker/:slug" element={<CompanyDetail />} />
                 <Route path="/forecast" element={<ForecastIndex />} />
-                <Route path="/forecast/:categorySlug" element={<CategoryForecast user={user} isSubscribed={effectiveIsSubscribed} />} />
+                <Route path="/constraints/national/power" element={<PowerOutlook user={user} />} />
+                <Route path="/constraints/national/cooling" element={<CoolingOutlook user={user} />} />
+                <Route path="/constraints/national/water" element={<WaterOutlook user={user} />} />
+                <Route path="/constraints/national/permitting" element={<PermittingOutlook user={user} />} />
+                <Route path="/constraints/national/supply-chain" element={<SupplyChainOutlook user={user} />} />
+                <Route path="/constraints/national/labor" element={<LaborOutlook user={user} />} />
+                <Route path="/constraint-atlas" element={<ConstraintMap isAdmin={effectiveIsAdmin} />} />
+                <Route path="/ground-truth" element={<GroundTruth />} />
+                <Route path="/ground-truth/:slug" element={<GroundTruthChildPage />} />
+                <Route path="/constraint-atlas/interactive" element={<InteractiveConstraintMap />} />
+                <Route path="/constraint-map" element={<Navigate to="/constraint-atlas" replace />} />
+                <Route path="/constraint-map/interactive" element={<Navigate to="/constraint-atlas/interactive" replace />} />
+                <Route path="/failures" element={<FailureCaseStudies />} />
+                <Route path="/failures/midwest-ai-campus" element={<MidwestAICampusPage />} />
+                <Route path="/markets/:slug" element={<MarketDossier />} />
+                <Route path="/markets/northern-va" element={<MarketConstraintOutlook market="northern-va" />} />
+                <Route path="/markets/phoenix" element={<MarketConstraintOutlook market="phoenix" />} />
+                <Route path="/markets/texas" element={<MarketConstraintOutlook market="texas" />} />
+                <Route path="/constraint-atlas/northern-virginia/:categorySlug" element={<Navigate to="/markets/northern-va" replace />} />
+                <Route path="/constraint-atlas/phoenix/:categorySlug" element={<Navigate to="/markets/phoenix" replace />} />
+                <Route path="/constraint-atlas/texas/:categorySlug" element={<Navigate to="/markets/texas" replace />} />
+                <Route path="/constraint-map/northern-virginia/:categorySlug" element={<Navigate to="/markets/northern-va" replace />} />
+                <Route path="/constraint-map/phoenix/:categorySlug" element={<Navigate to="/markets/phoenix" replace />} />
+                <Route path="/constraint-map/texas/:categorySlug" element={<Navigate to="/markets/texas" replace />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/subscribe" element={<SubscribePage />} />
                 <Route path="/get-access" element={<GetAccess />} />
                 <Route path="/enterprise-request" element={<EnterpriseRequest />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/intelligence" element={effectiveIsSubscribed ? <IntelligenceArchive /> : <Paywall user={user} />} />
-                <Route path="/sitemap" element={<Sitemap user={user} isSubscribed={effectiveIsSubscribed} isAdmin={effectiveIsAdmin} />} />
+                <Route path="/intelligence" element={<IntelligenceArchive />} />
+                <Route path="/sitemap" element={<Sitemap user={user} isAdmin={effectiveIsAdmin} />} />
                 <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <Home />} />
                 <Route path="/admin/navigator" element={isAdmin ? <Navigator /> : <Home />} />
+                <Route path="/admin/map-projects" element={isAdmin ? <AdminMapProjects /> : <Home />} />
+
+                {/* Dynamic Constraint Pages */}
+                <Route path="/power" element={<ConstraintDetail constraintId="power" />} />
+                <Route path="/power/grid-monitor" element={<ConstraintMonitorChild constraintId="power" />} />
+                <Route path="/power/:marketSlug" element={<ConstraintDetail constraintId="power" />} />
+                <Route path="/supply-chain" element={<ConstraintDetail constraintId="supply-chain" />} />
+                <Route path="/supply-chain/infrastructure-monitor" element={<ConstraintMonitorChild constraintId="supply-chain" />} />
+                <Route path="/supply-chain/:marketSlug" element={<ConstraintDetail constraintId="supply-chain" />} />
+                <Route path="/water" element={<ConstraintDetail constraintId="water" />} />
+                <Route path="/water/resource-monitor" element={<ConstraintMonitorChild constraintId="water" />} />
+                <Route path="/water/:marketSlug" element={<ConstraintDetail constraintId="water" />} />
+                <Route path="/cooling" element={<ConstraintDetail constraintId="cooling" />} />
+                <Route path="/cooling/system-monitor" element={<ConstraintMonitorChild constraintId="cooling" />} />
+                <Route path="/cooling/:marketSlug" element={<ConstraintDetail constraintId="cooling" />} />
+                <Route path="/land" element={<ConstraintDetail constraintId="land" />} />
+                <Route path="/land/:marketSlug" element={<ConstraintDetail constraintId="land" />} />
+                <Route path="/permitting" element={<ConstraintDetail constraintId="permitting" />} />
+                <Route path="/permitting/process-monitor" element={<ConstraintMonitorChild constraintId="permitting" />} />
+                <Route path="/permitting/:marketSlug" element={<ConstraintDetail constraintId="permitting" />} />
+                <Route path="/labor" element={<ConstraintDetail constraintId="labor" />} />
+                <Route path="/labor/workforce-monitor" element={<ConstraintMonitorChild constraintId="labor" />} />
+                <Route path="/labor/:marketSlug" element={<ConstraintDetail constraintId="labor" />} />
               </Routes>
             </main>
 
@@ -766,8 +961,10 @@ export default function App() {
                       onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=TPL&background=1a2633&color=fff'; }} 
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-condensed font-bold text-xl tracking-tight uppercase leading-none text-white">The Physical Layer</span>
+                  <div className="flex flex-col font-condensed font-bold text-[13px] leading-[0.9] tracking-tight uppercase text-white">
+                    <span>The</span>
+                    <span>Physical</span>
+                    <span>Layer</span>
                   </div>
                 </div>
                 
@@ -790,6 +987,12 @@ export default function App() {
                   >
                     Reports
                   </Link>
+                  <Link 
+                    to="/constraint-atlas"
+                    className="transition-colors cursor-pointer hover:text-white"
+                  >
+                    Constraint Atlas
+                  </Link>
                   <button 
                     onClick={() => setIsGlossaryOpen(true)} 
                     className="transition-colors cursor-pointer hover:text-white"
@@ -808,14 +1011,6 @@ export default function App() {
                   >
                     Sitemap
                   </Link>
-                  <a 
-                    href="https://www.linkedin.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="transition-colors hover:text-white"
-                  >
-                    LinkedIn
-                  </a>
                   {!user ? (
                     <button 
                       onClick={handleAdminLogin}

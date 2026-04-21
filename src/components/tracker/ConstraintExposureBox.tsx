@@ -1,4 +1,5 @@
 import React from 'react';
+import { impactLabelColor } from '../../lib/statusColors';
 
 const ALL_CONSTRAINTS = [
   'Power & Grid',
@@ -41,14 +42,6 @@ const getConstraintLevel = (category: string, exposures: string[]): 'HIGH' | 'ME
   return 'LOW';
 };
 
-const getBadgeColor = (level: 'HIGH' | 'MEDIUM' | 'LOW') => {
-  switch (level) {
-    case 'HIGH': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-    case 'MEDIUM': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-    case 'LOW': return 'bg-white/5 text-slate-500 border-white/5';
-  }
-};
-
 export const ConstraintExposureBox = ({ exposures }: { exposures: string[] }) => {
   return (
     <div className="bg-[#0f1a24]/50 border border-white/5 p-8">
@@ -60,10 +53,19 @@ export const ConstraintExposureBox = ({ exposures }: { exposures: string[] }) =>
       <div className="grid grid-cols-1 gap-3">
         {ALL_CONSTRAINTS.map(constraint => {
           const level = getConstraintLevel(constraint, exposures);
+          const colorKey = level === 'HIGH' ? 'high-friction' : level === 'MEDIUM' ? 'friction' : 'tailwind';
+          const colorConfig = impactLabelColor[colorKey];
           return (
-            <div key={constraint} className="flex items-center justify-between p-4 bg-white/5 border border-white/5">
+            <div key={constraint} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 group interactive-row">
               <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{constraint}</span>
-              <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 border ${getBadgeColor(level)}`}>
+              <span 
+                className="status-label"
+                style={{
+                  '--status-color': colorConfig?.color ?? undefined,
+                  '--status-color-bg': colorConfig?.bg ?? undefined,
+                  '--status-color-border': colorConfig?.border ?? undefined,
+                } as React.CSSProperties}
+              >
                 {level}
               </span>
             </div>

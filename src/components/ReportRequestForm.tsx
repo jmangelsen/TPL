@@ -69,7 +69,7 @@ export const ReportRequestForm: React.FC<ReportRequestFormProps> = ({ persona, o
         </p>
         <button 
           onClick={onBack}
-          className="px-8 py-3 bg-white text-[#1a2633] text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all"
+          className="px-8 py-3 bg-[#0f1a24] text-[#1a2633] text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all"
         >
           Return to Reports
         </button>

@@ -41,8 +41,8 @@ export const ForecastIndex = () => {
           {FORECAST_CATEGORIES.map(category => (
             <Link 
               key={category.id} 
-              to={`/forecast/${category.slug}`}
-              className="group p-8 bg-[#0f1a24]/50 border border-white/5 hover:border-[#3b82f6]/30 transition-all"
+              to={`/outlook/${category.slug}`}
+              className="group p-8 bg-[#0f1a24] border border-white/5 hover:border-[#3b82f6]/30 transition-all"
             >
               <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-widest group-hover:text-[#3b82f6] transition-colors">{category.name}</h2>
               <p className="text-sm text-slate-400 leading-relaxed">{category.description}</p>

@@ -1,12 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Company } from '../../lib/marketTrackerData';
 import { FilingsTable } from './FilingsTable';
 import { ConstraintExposureBox } from './ConstraintExposureBox';
-import { ArrowLeft, Lock, TrendingUp, TrendingDown, Minus, Activity, FileText } from 'lucide-react';
+import { ArrowLeft, Lock, TrendingUp, TrendingDown, Minus, Activity, FileText, ExternalLink } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 export const CompanyDetailTemplate = ({ company }: { company: Company }) => {
   const [imgError, setImgError] = useState(false);
+  const [news, setNews] = useState<any[]>([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+
+  useEffect(() => {
+    /*
+    const fetchNews = async () => {
+      try {
+        setLoadingNews(true);
+        // Fetch news for this company
+        const newsRef = collection(db, 'company_news');
+        const q = query(newsRef, where('companyId', '==', company.slug));
+        const snapshot = await getDocs(q);
+        
+        const newsItems = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as any[];
+
+        // Sort by publishedAt descending and take top 5
+        newsItems.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+        setNews(newsItems.slice(0, 5));
+      } catch (error) {
+        console.error("Error fetching company news:", error);
+      } finally {
+        setLoadingNews(false);
+      }
+    };
+
+    fetchNews();
+    */
+    setLoadingNews(false);
+  }, [company.slug]);
 
   return (
     <div className="min-h-screen bg-[#1a2633] text-slate-200 font-sans selection:bg-[#3b82f6] selection:text-white relative">
@@ -43,7 +77,7 @@ export const CompanyDetailTemplate = ({ company }: { company: Company }) => {
                 </div>
               ) : (
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-[#3b82f6]/10 border border-[#3b82f6]/20 rounded flex items-center justify-center shrink-0 shadow-lg">
-                  <span className="text-[#3b82f6] text-xl font-bold">{company.ticker.substring(0, 3)}</span>
+                  <span className="text-[#3b82f6] text-xl font-bold">{company.ticker.substring(0, 4)}</span>
                 </div>
               )}
               
@@ -95,6 +129,46 @@ export const CompanyDetailTemplate = ({ company }: { company: Company }) => {
                   {company.whyWeTrack}
                 </p>
               </div>
+            </section>
+
+            {/* Latest News & Signals */}
+            <section>
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.25em] mb-6 border-b border-white/5 pb-4">Latest News & Signals</h2>
+              {loadingNews ? (
+                <div className="text-sm text-slate-500 italic">Loading latest headlines...</div>
+              ) : news.length > 0 ? (
+                <div className="space-y-4">
+                  {news.map((item) => {
+                    const hoursAgo = Math.floor((Date.now() - new Date(item.publishedAt).getTime()) / (1000 * 60 * 60));
+                    const timeString = hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.floor(hoursAgo / 24)}d ago`;
+                    
+                    return (
+                      <div key={item.id} className="bg-[#0f1a24]/50 border border-white/5 p-6 hover:border-[#3b82f6]/30 transition-colors group">
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="block">
+                          <h3 className="text-sm font-bold text-white mb-2 group-hover:text-[#3b82f6] transition-colors flex items-start gap-2">
+                            {item.headline}
+                            <ExternalLink size={12} className="shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </h3>
+                          <div className="flex items-center gap-3 text-[10px] text-slate-500 uppercase tracking-widest mb-3">
+                            <span className="text-slate-400 font-bold">{item.source}</span>
+                            <span>•</span>
+                            <span>{timeString}</span>
+                          </div>
+                          {item.summary && (
+                            <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                              {item.summary}
+                            </p>
+                          )}
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-[#0f1a24]/30 border border-white/5 p-6 text-center">
+                  <p className="text-sm text-slate-500 italic">No recent headlines matching our AI infrastructure filters in the last few days.</p>
+                </div>
+              )}
             </section>
 
             {/* Latest Activity */}

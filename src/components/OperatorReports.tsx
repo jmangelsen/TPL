@@ -13,13 +13,7 @@ import {
   Scale
 } from 'lucide-react';
 import { ReportRequestForm } from './ReportRequestForm';
-
-const ReportCard = ({ title, description }: { title: string, description: string, key?: number | string }) => (
-  <div className="p-6 bg-[#0f1a24]/50 border border-white/5 hover:border-[#3b82f6]/30 transition-all group">
-    <h4 className="text-[#3b82f6] font-bold text-sm uppercase tracking-wider mb-2">{title}</h4>
-    <p className="text-slate-400 text-xs leading-relaxed">{description}</p>
-  </div>
-);
+import { TopoTile } from './ui/TopoTile';
 
 const AudienceSection = ({ 
   icon: Icon, 
@@ -36,25 +30,38 @@ const AudienceSection = ({
 }) => (
   <section className="py-16 border-t border-white/5">
     <div className="flex flex-col md:flex-row gap-12">
-      <div className="md:w-1/3 space-y-6">
-        <div className="w-12 h-12 bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
-          <Icon size={24} />
+      <div className="md:w-1/3 space-y-6 relative p-8 bg-white/5 border border-white/5 overflow-hidden">
+        {/* Topography Overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.05] z-0 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/Topo.Microchip.png')] bg-cover bg-center mix-blend-screen scale-[4]" />
         </div>
-        <h2 className="text-3xl font-bold tracking-tight text-white uppercase">{title}</h2>
-        <p className="text-slate-400 text-sm leading-relaxed italic border-l border-[#3b82f6]/30 pl-4">
-          {stakes}
-        </p>
-        <button 
-          onClick={() => onRequest(title)}
-          className="px-6 py-3 bg-[#3b82f6] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2563eb] transition-colors flex items-center gap-2 w-fit"
-        >
-          Request Report
-          <ArrowRight size={14} />
-        </button>
+        <div className="relative z-10 space-y-6">
+          <div className="w-12 h-12 bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
+            <Icon size={24} />
+          </div>
+          <h2 className="text-3xl font-bold tracking-tight text-white uppercase">{title}</h2>
+          <p className="text-slate-400 text-sm leading-relaxed italic border-l border-[#3b82f6]/30 pl-4">
+            {stakes}
+          </p>
+          <button 
+            onClick={() => onRequest(title)}
+            className="px-6 py-3 bg-[#3b82f6] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2563eb] transition-colors flex items-center gap-2 w-fit"
+          >
+            Request Report
+            <ArrowRight size={14} />
+          </button>
+        </div>
       </div>
-      <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative overflow-hidden">
         {reports.map((report, idx) => (
-          <ReportCard key={idx} title={report.title} description={report.description} />
+          <TopoTile 
+            key={idx}
+            index={idx}
+            total={reports.length}
+            title={report.title} 
+            description={report.description}
+            variant="dark"
+          />
         ))}
       </div>
     </div>

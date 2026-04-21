@@ -19,7 +19,7 @@ export function ViewModeToggle({ userEmail, isDarkNavPage }: { userEmail?: strin
   return (
     <div className={`flex items-center space-x-2 rounded-full text-xs px-3 py-1 border ${
       isDarkNavPage 
-        ? 'bg-tpl-ink text-tpl-bg border-tpl-bg/20 md:bg-white md:text-black md:border-black/20' 
+        ? 'bg-tpl-ink text-tpl-bg border-tpl-bg/20 md:bg-[#0f1a24] md:text-slate-900 md:border-black/20' 
         : 'bg-tpl-ink text-tpl-bg border-tpl-bg/20'
     }`}>
       <span className="font-bold uppercase tracking-widest text-[9px] opacity-70">Viewing as:</span>
@@ -29,7 +29,7 @@ export function ViewModeToggle({ userEmail, isDarkNavPage }: { userEmail?: strin
         className="bg-transparent border-none text-xs focus:outline-none font-bold cursor-pointer"
       >
         {VIEW_MODES.map((m) => (
-          <option key={m.value} value={m.value} className="text-tpl-ink bg-tpl-bg">
+          <option key={m.value} value={m.value} className="text-white bg-[#1a2633]">
             {m.label}
           </option>
         ))}

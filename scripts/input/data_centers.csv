@@ -1,0 +1,4 @@
+id,name,lat,lng,type,status,powerDrawMW
+dc-001,Example DC - Ashburn VA,39.0438,-77.4874,Hyperscale,Operating,200
+dc-002,Example DC - Phoenix AZ,33.4484,-112.0740,Hyperscale,Operating,150
+dc-003,Example DC - Dallas TX,32.7767,-96.7970,Colo,Operating,80

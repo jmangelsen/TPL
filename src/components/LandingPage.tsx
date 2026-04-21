@@ -81,50 +81,6 @@ export const LandingPage: React.FC<LandingPageProps> = () => {
           className="max-w-5xl w-full space-y-12 md:space-y-16 py-8 md:py-12"
         >
           <Logo />
-
-          <div className="flex flex-col items-center justify-center max-w-3xl mx-auto text-center border-t border-tpl-ink/10 pt-12">
-            <p className="text-lg md:text-2xl font-serif italic leading-snug text-tpl-slate mb-8">
-              Mapping the collision between digital ambition and physical reality. 
-              An evidence-driven analysis of water stress, power load, and land availability.
-            </p>
-            <Link 
-              to="/article"
-              className="group flex items-center justify-center gap-6 bg-tpl-ink text-tpl-bg px-8 md:px-10 py-4 md:py-5 rounded-none hover:bg-tpl-accent transition-all duration-500 shadow-xl w-full md:w-auto"
-            >
-              <span className="font-display font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs">Read Flagship Article</span>
-              <ArrowRight className="group-hover:translate-x-2 transition-transform" size={20} />
-            </Link>
-          </div>
-
-          {/* Subscribe Funnel */}
-          <div id="contact-funnel" className="bg-tpl-ink p-8 md:p-16 text-tpl-bg text-center space-y-8 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-tpl-accent z-20" />
-            
-            {/* Topography Overlay */}
-            <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
-              <div className="absolute inset-0 bg-[url('/Topo.Microchip.png')] bg-cover bg-center mix-blend-screen scale-[4] blur-sm" />
-            </div>
-
-            <div className="max-w-2xl mx-auto space-y-6 relative z-10">
-              <h2 className="text-2xl md:text-5xl font-bold tracking-tight leading-none uppercase">
-                The Infrastructure <br className="hidden md:block"/> Intelligence Report
-              </h2>
-              <p className="text-white/60 font-serif italic text-base md:text-lg leading-relaxed">
-                Operators, developers, and decision-makers: get the first-mover briefings on physical constraints, vendor positioning, and project bottlenecks before they hit mainstream coverage. Early access only.
-              </p>
-              <div className="pt-2">
-                <SubscribeForm />
-              </div>
-              <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.3em] text-tpl-accent">
-                Subscriber-Only Intelligence // Delivered Weekly
-              </p>
-            </div>
-            
-            {/* Decorative Grid */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-            </div>
-          </div>
         </motion.div>
       </section>
     </div>

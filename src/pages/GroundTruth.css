@@ -1,0 +1,119 @@
+.ground-truth-page {
+  /* SURFACES — warm near-black, not cool black */
+  --gt-bg:              #0F0C08;   /* primary page background */
+  --gt-surface:         #171209;   /* card / panel backgrounds */
+  --gt-surface-2:       #1E1810;   /* nested card / inner panels */
+  --gt-surface-warm:    #231C0F;   /* featured sections, alternating rows */
+  --gt-divider:         #2E2416;   /* horizontal rules, subtle dividers */
+  --gt-border:          #3D3020;   /* card borders, muted */
+
+  /* KRAFT ACCENT */
+  --gt-accent:          #C49A52;
+  --gt-accent-hover:    #D4AE6A;
+  --gt-accent-muted:    #8A6A2E;
+  --gt-accent-surface:  #2A2010;
+
+  /* TEXT */
+  --gt-text:            #E8E0D4;
+  --gt-text-muted:      #9A8C7A;
+  --gt-text-faint:      #5A4E3E;
+  --gt-text-accent:     #C49A52;
+
+  /* STATUS COLORS */
+  --gt-critical:        #C4522A;
+  --gt-critical-bg:     #2A1208;
+  --gt-elevated:        #C49A52;
+  --gt-elevated-bg:     #2A2010;
+  --gt-monitored:       #5A7A52;
+  --gt-monitored-bg:    #121A0E;
+
+  /* PROPOSED SITE STATUS COLORS */
+  --gt-rumored:         #6A6460;
+  --gt-announced:       #C4A862;
+  --gt-permitted:       #C49A52;
+  --gt-under-review:    #C4722A;
+  --gt-approved:        #C4522A;
+
+  /* TYPOGRAPHY */
+  --gt-font-display:    'Playfair Display', 'Georgia', serif;
+  --gt-font-body:       'Work Sans', 'Helvetica Neue', sans-serif;
+
+  /* TEXTURE */
+  --gt-grain-opacity:   0.035;
+
+  /* SHADOWS */
+  --gt-shadow-sm: 0 1px 3px rgba(13, 12, 8, 0.3);
+  --gt-shadow-md: 0 4px 16px rgba(13, 12, 8, 0.4);
+  --gt-shadow-lg: 0 12px 40px rgba(13, 12, 8, 0.5);
+}
+
+.ground-truth-page {
+  background-color: var(--gt-bg);
+  color: var(--gt-text);
+  font-family: var(--gt-font-body);
+}
+
+.gt-grain-section {
+  position: relative;
+}
+.gt-grain-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: var(--gt-grain-opacity);
+  mix-blend-mode: overlay;
+}
+
+.ground-truth-page h1, .ground-truth-page h2, .ground-truth-page h3 {
+  font-family: var(--gt-font-display);
+}
+
+.ground-truth-page .status-badge {
+  font-family: var(--gt-font-body);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
+.ground-truth-page .status-badge-critical { background: var(--gt-critical-bg); color: var(--gt-critical); border: 1px solid var(--gt-critical); }
+.ground-truth-page .status-badge-elevated { background: var(--gt-elevated-bg); color: var(--gt-elevated); border: 1px solid var(--gt-elevated); }
+.ground-truth-page .status-badge-monitored { background: var(--gt-monitored-bg); color: var(--gt-monitored); border: 1px solid var(--gt-monitored); }
+
+.ground-truth-page .btn-primary {
+  background: transparent;
+  border: 1.5px solid var(--gt-accent);
+  color: var(--gt-accent);
+  font-family: var(--gt-font-body);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  padding: 14px 28px;
+  transition: 180ms ease;
+}
+.ground-truth-page .btn-primary:hover {
+  background: var(--gt-accent);
+  color: var(--gt-bg);
+}
+
+.ground-truth-page .btn-ghost {
+  background: transparent;
+  border: 1px solid var(--gt-border);
+  color: var(--gt-text-muted);
+  font-family: var(--gt-font-body);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  padding: 14px 28px;
+  transition: 180ms ease;
+}
+.ground-truth-page .btn-ghost:hover {
+  border-color: var(--gt-accent-muted);
+  color: var(--gt-text);
+}

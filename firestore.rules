@@ -60,12 +60,28 @@ service cloud.firestore {
              isValidDateString(data.date);
     }
 
+    function isValidCompanyNews(data) {
+      return data.keys().hasAll(['companyId', 'headline', 'source', 'url', 'publishedAt', 'summary', 'createdAt']) &&
+             data.companyId is string &&
+             data.headline is string &&
+             data.source is string &&
+             data.url is string &&
+             data.publishedAt is string &&
+             data.summary is string &&
+             data.createdAt is string;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
 
     match /test/connection {
       allow read: if true;
+    }
+
+    match /site_errors/{errorId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
 
     match /subscribers/{subscriberId} {
@@ -84,14 +100,38 @@ service cloud.firestore {
     match /users/{userId} {
       // Users can read their own profile, admins can do everything
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow create, update: if isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId && (!('role' in request.resource.data) || request.resource.data.role != 'admin');
+      allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow delete: if isAdmin();
     }
 
     match /savedResearch/{researchId} {
-      // Users can read and write their own research, admins can do everything
-      allow read, create, delete: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if isAdmin();
+      // Users can read, create, update, and delete their own research, admins can do everything
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    match /company_news/{newsId} {
+      // Anyone can read company news.
+      // In a real production environment with a service account, write would be restricted to isAdmin().
+      // Here we allow write with schema validation so the backend can populate it.
+      allow read: if true;
+      allow write: if isValidCompanyNews(request.resource.data);
+    }
+
+    match /buildout_events/{eventId} {
+      // Anyone can read buildout events for the tracker
+      allow read: if true;
+      // Only admins can modify buildout events
+      allow write: if isAdmin();
+    }
+
+    match /sector_spend/{sectorId} {
+      // Anyone can read sector spend for the evidence drawer
+      allow read: if true;
+      // Only admins can modify sector spend
+      allow write: if isAdmin();
     }
   }
 }
