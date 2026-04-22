@@ -20,4 +20,4 @@ COPY tsconfig.json ./
 COPY firebase-applet-config.json ./
 EXPOSE 3000
 ENV NODE_ENV=production
-CMD ["npm", "start"]
+CMD ["node", "--experimental-strip-types", "server.ts"]
