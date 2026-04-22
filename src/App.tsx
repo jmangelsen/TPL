@@ -43,8 +43,6 @@ import { IntelligenceArchive } from './components/IntelligenceArchive';
 import { ConstraintMonitor } from './components/ConstraintMonitor';
 import { MonitorMethodology } from './pages/MonitorMethodology';
 import { MonitorReport } from './pages/MonitorReport';
-import { Paywall } from './components/Paywall';
-import { runEarlyAccessSummaryReport } from './lib/cron';
 import { auth, db, signInWithGoogle } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -55,6 +53,7 @@ import { ViewModeProvider } from './context/ViewModeContext';
 import { ViewModeToggle } from './components/admin/ViewModeToggle';
 import { useEffectiveTier } from './hooks/useEffectiveTier';
 import { Navigator } from './pages/admin/Navigator';
+import { SiteErrors } from './pages/admin/SiteErrors';
 import { isAdminEmail } from './lib/adminUtils';
 
 import { EnterpriseLayout } from './components/enterprise/EnterpriseLayout';
@@ -753,6 +752,7 @@ const GetAccess = () => (
 export default function App() {
   const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -760,8 +760,6 @@ export default function App() {
   const isDarkNavPage = true;
 
   useEffect(() => {
-    runEarlyAccessSummaryReport(isAdmin);
-
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
       setUser(u);
       if (u) {
@@ -824,8 +822,6 @@ export default function App() {
           <Route index element={<Navigate to="q2-2026" replace />} />
         </Route>
 
-import { MapLayoutShell } from './components/map/MapLayoutShell';
-// ...
         {/* Main Site Routes */}
         <Route path="/map" element={<MapLayoutShell />} />
         <Route path="*" element={
@@ -839,22 +835,22 @@ import { MapLayoutShell } from './components/map/MapLayoutShell';
             <main className="pt-20">
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/article" element={<FlagshipArticle user={user} />} />
+                <Route path="/article" element={<FlagshipArticle user={user} isSubscribed={isSubscribed} />} />
                 <Route path="/reports" element={<OperatorReports />} />
-                <Route path="/monitor" element={<ConstraintMonitor user={user} />} />
+                <Route path="/monitor" element={<ConstraintMonitor user={user} isSubscribed={isSubscribed} />} />
                 <Route path="/monitor/methodology" element={<MonitorMethodology />} />
-                <Route path="/monitor/report" element={<MonitorReport user={user} />} />
+                <Route path="/monitor/report" element={<MonitorReport user={user} isSubscribed={isSubscribed} />} />
                 <Route path="/buildout-tracker" element={<BuildoutTrackerHub />} />
                 <Route path="/evidence/:sectorSlug" element={<EvidenceSectorPage />} />
                 <Route path="/market-tracker" element={effectiveIsAdmin ? <MarketTrackerHub /> : <Navigate to="/" replace />} />
                 <Route path="/market-tracker/:slug" element={<CompanyDetail />} />
                 <Route path="/forecast" element={<ForecastIndex />} />
-                <Route path="/constraints/national/power" element={<PowerOutlook user={user} />} />
-                <Route path="/constraints/national/cooling" element={<CoolingOutlook user={user} />} />
-                <Route path="/constraints/national/water" element={<WaterOutlook user={user} />} />
-                <Route path="/constraints/national/permitting" element={<PermittingOutlook user={user} />} />
-                <Route path="/constraints/national/supply-chain" element={<SupplyChainOutlook user={user} />} />
-                <Route path="/constraints/national/labor" element={<LaborOutlook user={user} />} />
+                <Route path="/constraints/national/power" element={<PowerOutlook user={user} isSubscribed={isSubscribed} />} />
+                <Route path="/constraints/national/cooling" element={<CoolingOutlook user={user} isSubscribed={isSubscribed} />} />
+                <Route path="/constraints/national/water" element={<WaterOutlook user={user} isSubscribed={isSubscribed} />} />
+                <Route path="/constraints/national/permitting" element={<PermittingOutlook user={user} isSubscribed={isSubscribed} />} />
+                <Route path="/constraints/national/supply-chain" element={<SupplyChainOutlook user={user} isSubscribed={isSubscribed} />} />
+                <Route path="/constraints/national/labor" element={<LaborOutlook user={user} isSubscribed={isSubscribed} />} />
                 <Route path="/constraint-atlas" element={<ConstraintMap isAdmin={effectiveIsAdmin} />} />
                 <Route path="/ground-truth" element={<GroundTruth />} />
                 <Route path="/ground-truth/:slug" element={<GroundTruthChildPage />} />
@@ -881,10 +877,11 @@ import { MapLayoutShell } from './components/map/MapLayoutShell';
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/intelligence" element={<IntelligenceArchive />} />
-                <Route path="/sitemap" element={<Sitemap user={user} isAdmin={effectiveIsAdmin} />} />
+                <Route path="/sitemap" element={<Sitemap user={user} isAdmin={effectiveIsAdmin} isSubscribed={isSubscribed} />} />
                 <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <Home />} />
                 <Route path="/admin/navigator" element={isAdmin ? <Navigator /> : <Home />} />
                 <Route path="/admin/map-projects" element={isAdmin ? <AdminMapProjects /> : <Home />} />
+                <Route path="/admin/errors" element={isAdmin ? <SiteErrors /> : <Home />} />
 
                 {/* Dynamic Constraint Pages */}
                 <Route path="/power" element={<ConstraintDetail constraintId="power" />} />

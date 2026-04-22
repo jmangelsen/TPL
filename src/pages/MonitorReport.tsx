@@ -3,7 +3,7 @@ import { ArrowLeft, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { signInWithGoogle } from '../firebase';
 
-export const MonitorReport = ({ user }: { user: any }) => {
+export const MonitorReport = ({ user, isSubscribed }: { user: any, isSubscribed: boolean }) => {
   const isGated = !user;
 
   return (

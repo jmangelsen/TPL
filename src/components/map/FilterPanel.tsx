@@ -3,20 +3,21 @@ import { Layers, Zap, Server, ChevronDown, ChevronRight, X, SlidersHorizontal } 
 import type { LayerVisibility, TechFilter, TxBandFilter } from './InfrastructureMap';
 
 const TECH_ORDER = [
-  { id: 'Solar', color: '#F7C948', label: 'Solar' },
-  { id: 'Wind', color: '#6BE0FF', label: 'Wind' },
-  { id: 'Offshore Wind', color: '#29B6F6', label: 'Offshore Wind' },
-  { id: 'Nuclear', color: '#FF6BCB', label: 'Nuclear' },
-  { id: 'Gas', color: '#FF8C42', label: 'Natural Gas' },
-  { id: 'Hydro', color: '#66BB6A', label: 'Hydro' },
-  { id: 'Coal', color: '#9E9E9E', label: 'Coal' },
-  { id: 'Storage', color: '#B39DDB', label: 'Storage' },
-  { id: 'Other', color: '#AAAAAA', label: 'Other' },
+  { id: 'Solar',       color: '#F59E0B', label: 'Solar' },
+  { id: 'Wind',        color: '#06B6D4', label: 'Wind' },
+  { id: 'Nuclear',     color: '#10B981', label: 'Nuclear' },
+  { id: 'Natural Gas', color: '#8B5CF6', label: 'Natural Gas' },
+  { id: 'Hydro',       color: '#0EA5E9', label: 'Hydro' },
+  { id: 'Coal',        color: '#6B7280', label: 'Coal' },
+  { id: 'Storage',     color: '#EC4899', label: 'Storage' },
+  { id: 'Other',       color: '#9CA3AF', label: 'Other' },
 ];
 
 const TX_BANDS = [
-  { id: '115-230kV' as const, color: '#A78BFA', label: '115-230 kV', desc: 'Regional distribution' },
-  { id: '345kV+'    as const, color: '#60A5FA', label: '345 kV+',    desc: 'High-voltage backbone'  },
+  { id: '345plus' as const, color: '#3B82F6', label: '345 kV+',     desc: 'Extra high voltage backbone' },
+  { id: '230-344' as const, color: '#8B5CF6', label: '230-344 kV',  desc: 'Regional backbone' },
+  { id: '115-229' as const, color: '#6366F1', label: '115-229 kV',  desc: 'Local transmission' },
+  { id: '60-114'  as const, color: '#94A3B8', label: '60-114 kV',   desc: 'Sub-transmission' }
 ];
 
 const DC_COLORS: Record<string, string> = {
@@ -27,7 +28,6 @@ interface FilterPanelProps {
   layerVis: LayerVisibility; onToggleLayer: (key: keyof LayerVisibility) => void;
   techFilter: TechFilter; onToggleTech: (tech: string) => void;
   txBands: TxBandFilter; onToggleTxBand: (band: keyof TxBandFilter) => void;
-  roadsVisible: boolean; onToggleRoads: (v: boolean) => void;
 }
 
 function Section({ title, icon, expanded, onToggle, children }: {
@@ -48,9 +48,18 @@ function Section({ title, icon, expanded, onToggle, children }: {
 function ToggleRow({ label, dot, active, onClick, sublabel }: {
   label: string; dot?: string; active: boolean; onClick: () => void; sublabel?: string;
 }) {
+  const isGradient = dot?.includes('gradient');
   return (
     <button className={'tpl-fp-row ' + (active ? 'tpl-fp-row--active' : 'tpl-fp-row--muted')} onClick={onClick}>
-      {dot && <span className="tpl-fp-dot" style={{ background: active ? dot : 'transparent', borderColor: dot }} />}
+      {dot && (
+        <span 
+          className="tpl-fp-dot" 
+          style={{ 
+            background: active ? dot : 'transparent', 
+            borderColor: isGradient ? '#6B7280' : dot 
+          }} 
+        />
+      )}
       <span className="tpl-fp-row-text">
         <span className="tpl-fp-row-label">{label}</span>
         {sublabel && <span className="tpl-fp-row-sub">{sublabel}</span>}
@@ -72,9 +81,9 @@ function TxBandRow({ band, active, onClick }: { band: typeof TX_BANDS[0]; active
   );
 }
 
-export function FilterPanel({ layerVis, onToggleLayer, techFilter, onToggleTech, txBands, onToggleTxBand, roadsVisible, onToggleRoads }: FilterPanelProps) {
+export function FilterPanel({ layerVis, onToggleLayer, techFilter, onToggleTech, txBands, onToggleTxBand }: FilterPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [openSecs, setOpenSecs] = useState({ layers: true, plants: true, tx: true, dc: false, base: false });
+  const [openSecs, setOpenSecs] = useState({ layers: true, plants: true, tx: true, dc: false });
   const toggle = (key: keyof typeof openSecs) => setOpenSecs(prev => ({ ...prev, [key]: !prev[key] }));
 
   if (collapsed) {
@@ -101,7 +110,7 @@ export function FilterPanel({ layerVis, onToggleLayer, techFilter, onToggleTech,
         <Section title="Layers" icon={<Layers size={13} />} expanded={openSecs.layers} onToggle={() => toggle('layers')}>
           <ToggleRow label="Power Plants" dot="#F7C948" active={layerVis.plants}       onClick={() => onToggleLayer('plants')} />
           <ToggleRow label="Transmission" dot="#60A5FA" active={layerVis.transmission} onClick={() => onToggleLayer('transmission')} />
-          <ToggleRow label="Substations"  dot="#A78BFA" active={layerVis.substations}  onClick={() => onToggleLayer('substations')} />
+          <ToggleRow label="Substations"  dot="#FFFFFF" active={layerVis.substations}  onClick={() => onToggleLayer('substations')} />
           <ToggleRow label="Data Centers" dot="#FFD166" active={layerVis.dataCenters}  onClick={() => onToggleLayer('dataCenters')} />
         </Section>
         <Section title="Plant Technology" icon={<Zap size={13} />} expanded={openSecs.plants} onToggle={() => toggle('plants')}>
@@ -111,14 +120,6 @@ export function FilterPanel({ layerVis, onToggleLayer, techFilter, onToggleTech,
         </Section>
         <Section title="Transmission Voltage" icon={<Zap size={13} />} expanded={openSecs.tx} onToggle={() => toggle('tx')}>
           {TX_BANDS.map(band => <TxBandRow key={band.id} band={band} active={txBands[band.id]} onClick={() => onToggleTxBand(band.id)} />)}
-          <div className="tpl-fp-tx-legend">
-            {[{label:'735 kV+',color:'#4BE0FF'},{label:'500 kV',color:'#2CA9D6'},{label:'345 kV',color:'#60A5FA'},{label:'230 kV',color:'#818CF8'},{label:'115 kV',color:'#A78BFA'}].map(v => (
-              <div key={v.label} className="tpl-fp-tx-legend-row">
-                <span className="tpl-fp-tx-legend-line" style={{ background: v.color }} />
-                <span className="tpl-fp-tx-legend-label">{v.label}</span>
-              </div>
-            ))}
-          </div>
         </Section>
         <Section title="Data Center Types" icon={<Server size={13} />} expanded={openSecs.dc} onToggle={() => toggle('dc')}>
           {Object.entries(DC_COLORS).map(([type, color]) => (
@@ -127,9 +128,6 @@ export function FilterPanel({ layerVis, onToggleLayer, techFilter, onToggleTech,
               <span className="tpl-fp-row-label">{type}</span>
             </div>
           ))}
-        </Section>
-        <Section title="Base Map" icon={<Layers size={13} />} expanded={openSecs.base} onToggle={() => toggle('base')}>
-          <ToggleRow label="Roads and Highways" active={roadsVisible} onClick={() => onToggleRoads(!roadsVisible)} />
         </Section>
       </div>
       <div className="tpl-fp-footer">

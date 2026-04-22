@@ -27,15 +27,8 @@ export function LeftNavRail() {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
-      {/* Logo */}
-      <div className="tpl-rail-logo">
-        <Link to="/" title="The Physical Layer">
-          <img src="/tpl-seal.png" alt="TPL" className="tpl-rail-seal" />
-        </Link>
-      </div>
-
       {/* Nav links */}
-      <div className="tpl-rail-links">
+      <div className="tpl-rail-links" style={{ marginTop: 24 }}>
         {NAV_ITEMS.map(({ to, icon: Icon, label }) => {
           const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
           return (

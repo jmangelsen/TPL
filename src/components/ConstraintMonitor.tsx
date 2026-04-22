@@ -70,7 +70,7 @@ const TrendIcon = ({ trend }: { trend: Constraint['trend'] }) => {
   return <span title="Stable"><Minus size={12} className="text-slate-600" /></span>;
 };
 
-export const ConstraintMonitor = ({ user }: { user: any }) => {
+export const ConstraintMonitor = ({ user, isSubscribed }: { user: any, isSubscribed: boolean }) => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeStatus, setActiveStatus] = useState('All');
   

@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import cron from "node-cron";
@@ -7,6 +6,8 @@ import { Parser } from "json2csv";
 import nodemailer from "nodemailer";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, setDoc, getDocs, query, where, limit, deleteDoc, writeBatch, getDoc } from "firebase/firestore";
+import admin from "firebase-admin";
+import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import cors from "cors";
 import crypto from "crypto";
@@ -20,6 +21,14 @@ const firebaseConfig = JSON.parse(fs.readFileSync(path.join(__dirname, "firebase
 // Initialize Firebase Client SDK
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: firebaseConfig.projectId
+  });
+}
+const dbAdmin = getAdminFirestore(admin.app(), firebaseConfig.firestoreDatabaseId);
 
 const NEWSAPI_API_KEY = process.env.NEWSAPI_API_KEY || "481562ced8724d2b966b8e3969fb10f8";
 const NEWSAPI_BASE_URL = process.env.NEWSAPI_BASE_URL || "https://newsapi.org/v2";
@@ -56,7 +65,7 @@ async function refreshCompanyNews() {
   console.log("Starting Company News refresh job...");
   try {
     // Dynamically import to get the latest config
-    const { companies } = await import('./src/lib/marketTrackerData.js');
+    const { companies } = await import('./src/lib/marketTrackerData.ts');
     
     let opCount = 0;
     let batch = writeBatch(db);
@@ -71,43 +80,33 @@ async function refreshCompanyNews() {
         if (!article.url) continue;
         const urlHash = crypto.createHash('md5').update(article.url).digest('hex');
         const docId = `${company.slug}_${urlHash}`;
-        const docRef = doc(db, 'company_news', docId);
         
-        batch.set(docRef, {
+        // Use dbAdmin to write
+        await dbAdmin.collection('company_news').doc(docId).set({
           companyId: company.slug,
           ...article,
           createdAt: new Date().toISOString()
         }, { merge: true });
         
         opCount++;
-        if (opCount >= 400) {
-          await batch.commit();
-          batch = writeBatch(db);
-          opCount = 0;
-        }
       }
       
       // Simple delay to respect rate limits
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    if (opCount > 0) {
-      await batch.commit();
-    }
-
     // Cleanup old news (> 10 days)
     const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
-    const oldNewsQuery = query(collection(db, 'company_news'), where('publishedAt', '<', tenDaysAgo));
-    const oldNewsSnapshot = await getDocs(oldNewsQuery);
+    const oldNewsSnapshot = await dbAdmin.collection('company_news').where('publishedAt', '<', tenDaysAgo).get();
     if (!oldNewsSnapshot.empty) {
-      let deleteBatch = writeBatch(db);
+      let deleteBatch = dbAdmin.batch();
       let deleteCount = 0;
       for (const document of oldNewsSnapshot.docs) {
         deleteBatch.delete(document.ref);
         deleteCount++;
         if (deleteCount >= 400) {
           await deleteBatch.commit();
-          deleteBatch = writeBatch(db);
+          deleteBatch = dbAdmin.batch();
           deleteCount = 0;
         }
       }
@@ -325,13 +324,14 @@ ${instructions}
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(__dirname, "dist");
     
     // Serve static files with proper caching
     app.use(express.static(distPath, {

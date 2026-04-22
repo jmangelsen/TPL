@@ -2,13 +2,12 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, Share2, Bookmark, Clock, Calendar } from 'lucide-react';
 import { SubscribeForm } from './SubscribeForm';
-import { DeepAnalysis } from './DeepAnalysis';
-
 interface FlagshipArticleProps {
   user: any;
+  isSubscribed: boolean;
 }
 
-export const FlagshipArticle: React.FC<FlagshipArticleProps> = ({ user }) => {
+export const FlagshipArticle: React.FC<FlagshipArticleProps> = ({ user, isSubscribed }) => {
   return (
     <motion.div 
       initial={{ opacity: 0 }}

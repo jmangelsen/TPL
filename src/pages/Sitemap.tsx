@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Globe, 
@@ -17,7 +17,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { TrackerLayout } from '../components/tracker/TrackerLayout';
 import { isAdminEmail } from '../lib/adminUtils';
 
@@ -30,20 +30,13 @@ interface RouteItem {
   group: string;
 }
 
-interface SiteError {
-  id: string;
-  message: string;
-  timestamp: string;
-  url: string;
-  stack?: string;
-}
-
 const ROUTES: RouteItem[] = [
   // Admin / Internal
   { path: '/sitemap', title: 'Site Navigator', status: 'admin', access: 'Admin', group: 'Admin / Internal' },
   { path: '/admin', title: 'Admin Dashboard', status: 'admin', access: 'Admin', group: 'Admin / Internal' },
   { path: '/admin/navigator', title: 'Navigator', status: 'admin', access: 'Admin', group: 'Admin / Internal' },
   { path: '/admin/map-projects', title: 'Map Projects', status: 'admin', access: 'Admin', group: 'Admin / Internal' },
+  { path: '/admin/errors', title: 'Error Log', status: 'admin', access: 'Admin', group: 'Admin / Internal' },
 
   // Core / Public
   { path: '/', title: 'Home', status: 'live', access: 'Public', group: 'Core / Public' },
@@ -152,26 +145,6 @@ const ROUTES: RouteItem[] = [
 export const Sitemap = ({ user, isAdmin, isSubscribed }: { user: any, isAdmin: boolean, isSubscribed: boolean }) => {
   const navigate = useNavigate();
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
-  const [errors, setErrors] = useState<SiteError[]>([]);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-
-    const fetchErrors = async () => {
-      try {
-        const q = query(collection(db, 'site_errors'), orderBy('timestamp', 'desc'));
-        const snapshot = await getDocs(q);
-        const siteErrors: SiteError[] = [];
-        snapshot.forEach((doc) => {
-          siteErrors.push({ id: doc.id, ...doc.data() } as SiteError);
-        });
-        setErrors(siteErrors);
-      } catch (error) {
-        console.error("Error fetching site errors:", error);
-      }
-    };
-    fetchErrors();
-  }, [isAdmin]);
 
   const handleCopy = (path: string) => {
     const fullUrl = `${window.location.origin}${path}`;
@@ -250,39 +223,6 @@ export const Sitemap = ({ user, isAdmin, isSubscribed }: { user: any, isAdmin: b
         <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
           {/* Route Inventory */}
           <div className="space-y-16">
-            {/* Site Errors */}
-            {isAdmin && (
-              <section>
-                <h2 className="text-[10px] font-bold text-[#3182ce] uppercase tracking-[0.3em] mb-8 border-b border-[#dcd9d5] pb-4 flex items-center gap-2">
-                  <AlertTriangle size={14} className="text-rose-500" /> Site Errors
-                </h2>
-                {errors.length === 0 ? (
-                  <div className="bg-[#f9f8f5] border border-[#dcd9d5] p-8 rounded-sm text-center text-slate-500 text-xs shadow-sm">
-                    No site errors detected.
-                  </div>
-                ) : (
-                  <div className="grid gap-px bg-[#dcd9d5] border border-[#dcd9d5]">
-                    {errors.map(err => (
-                      <div key={err.id} className="bg-[#f9f8f5] p-6 hover:bg-white transition-colors">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="space-y-1">
-                            <h3 className="text-sm font-bold text-slate-900 tracking-tight">{err.message}</h3>
-                            <div className="font-mono text-[10px] text-slate-500">{err.url}</div>
-                            <div className="text-[10px] text-slate-500">{new Date(err.timestamp).toLocaleString()}</div>
-                          </div>
-                          <AlertTriangle size={16} className="text-rose-500 shrink-0" />
-                        </div>
-                        {err.stack && (
-                          <pre className="mt-4 p-4 bg-slate-100 border border-slate-200 rounded text-[10px] text-slate-700 overflow-auto max-h-32">
-                            {err.stack}
-                          </pre>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
 
             {groups.map(group => (
               <section key={group}>
@@ -423,10 +363,16 @@ export const Sitemap = ({ user, isAdmin, isSubscribed }: { user: any, isAdmin: b
                   <ChevronRight size={14} className="text-slate-400 group-hover:text-[#3182ce]" />
                 </Link>
                 {isAdmin && (
+                  <>
                   <Link to="/constraint-atlas" className="flex items-center justify-between p-4 bg-white border border-[#dcd9d5] hover:border-slate-400 transition-colors group shadow-sm">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600 group-hover:text-[#3182ce]">Open Constraint Atlas</span>
                     <ChevronRight size={14} className="text-slate-400 group-hover:text-[#3182ce]" />
                   </Link>
+                  <Link to="/admin/errors" className="flex items-center justify-between p-4 bg-white border border-[#dcd9d5] hover:border-slate-400 transition-colors group shadow-sm mt-3 border-t-2 border-t-rose-500 pt-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-rose-600 group-hover:text-rose-500 flex items-center gap-2"><AlertTriangle size={14} /> View Error Logs</span>
+                    <ChevronRight size={14} className="text-rose-400 group-hover:text-rose-500" />
+                  </Link>
+                  </>
                 )}
               </div>
             </div>

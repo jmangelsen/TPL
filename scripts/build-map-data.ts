@@ -1,15 +1,37 @@
 import fetch from 'node-fetch';
 import { parse as parseCsv } from 'csv-parse/sync';
 import fs from 'fs/promises';
+import { createWriteStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(__dirname, '..', 'public', 'data');
 
-const GPPD_CSV_URL = 'https://raw.githubusercontent.com/wri/global-power-plant-database/master/output_database/global_power_plant_database.csv';
-const HIFLD_TX_URL = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/US_Electric_Power_Transmission_Lines/FeatureServer/0/query?where=1%3D1&outFields=ID,VOLTAGE,OWNER,TYPE&geometryPrecision=4&outSR=4326&f=geojson&resultRecordCount=2000';
-const HIFLD_SUBS_URL = 'https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Electric_Substations/FeatureServer/0/query?where=1%3D1&outFields=NAME,OWNER,VOLTAGES,COUNTY,STATE&geometryPrecision=4&outSR=4326&f=geojson&resultRecordCount=5000';
+const GPPD_CSV_URL = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/Power_Plants_in_the_US/FeatureServer/0/query';
+// Transmission Lines (60kV+)
+const HIFLD_TX_BASE = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/US_Electric_Power_Transmission_Lines/FeatureServer/0/query';
+const HIFLD_TX_PARAMS = new URLSearchParams({
+  where: 'VOLTAGE >= 60',
+  outFields: '*',
+  f: 'geojson',
+  returnGeometry: 'true',
+  outSR: '4326',
+  resultRecordCount: '4000'
+});
+const HIFLD_TX_URL = `${HIFLD_TX_BASE}?${HIFLD_TX_PARAMS.toString()}`;
+
+// Substations
+const HIFLD_SUBS_BASE = 'https://services6.arcgis.com/OO2s4OoyCZkYJ6oE/arcgis/rest/services/Substations/FeatureServer/0/query';
+const HIFLD_SUBS_PARAMS = new URLSearchParams({
+  where: '1=1',
+  outFields: '*',
+  f: 'geojson',
+  returnGeometry: 'true',
+  outSR: '4326',
+  resultRecordCount: '5000'
+});
+const HIFLD_SUBS_URL = `${HIFLD_SUBS_BASE}?${HIFLD_SUBS_PARAMS.toString()}`;
 const DATA_CENTERS_CSV = path.join(__dirname, 'input', 'data_centers.csv');
 
 const isFiniteNum = (v: any): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -20,82 +42,261 @@ function validateFC(name: string, fc: any) {
   console.log(`[${name}] ${fc.features.length === 0 ? 'WARNING: 0' : 'OK: ' + fc.features.length} features`);
 }
 
-function normalizeTech(s: string, n: string) {
-  s = (s||'').toLowerCase(); n = (n||'').toLowerCase();
+function normalizeTech(s: string) {
+  s = (s||'').toLowerCase();
   if (s.includes('solar')) return 'Solar';
-  if (s.includes('wind') && n.includes('offshore')) return 'Offshore Wind';
   if (s.includes('wind')) return 'Wind';
   if (s.includes('nuclear')) return 'Nuclear';
-  if (s.includes('hydro') || s.includes('water')) return 'Hydro';
-  if (s.includes('gas') || s.includes('ng')) return 'Gas';
+  if (s.includes('hydro') || s.includes('water') || s.includes('pumped storage')) return 'Hydro';
+  if (s.includes('gas') || s.includes('ng') || s.includes('natural gas')) return 'Natural Gas';
   if (s.includes('coal')) return 'Coal';
-  if (s.includes('oil') || s.includes('petroleum')) return 'Oil';
-  if (s.includes('geo')) return 'Geothermal';
-  if (s.includes('biom') || s.includes('waste')) return 'Biomass';
   if (s.includes('stor') || s.includes('battery')) return 'Storage';
   return 'Other';
 }
 
+async function fetchAllFeatures(baseUrl: string, whereClause: string): Promise<any[]> {
+  let allFeatures: any[] = [];
+  let offset = 0;
+  const batchSize = 2000;
+  
+  while (true) {
+    const params = new URLSearchParams({
+      where: whereClause,
+      outFields: '*',
+      f: 'geojson',
+      returnGeometry: 'true',
+      outSR: '4326',
+      resultOffset: offset.toString(),
+      resultRecordCount: batchSize.toString()
+    });
+    
+    const response = await fetch(`${baseUrl}?${params}`);
+    if (!response.ok) {
+      throw new Error(`ArcGIS fetch failed: ${response.status} ${response.statusText}`);
+    }
+    const data: any = await response.json();
+    
+    if (data.error) {
+      throw new Error(`ArcGIS Error: ${JSON.stringify(data.error)}`);
+    }
+
+    if (!data.features || data.features.length === 0) break;
+    
+    allFeatures = allFeatures.concat(data.features);
+    console.log(`  Fetched ${allFeatures.length} features so far...`);
+    
+    // Check if we hit the limit or have more
+    if (data.features.length < batchSize) break;
+    if (data.properties?.exceededTransferLimit === false) break;
+    
+    offset += data.features.length;
+  }
+  
+  return allFeatures;
+}
+
 async function buildPlants() {
-  console.log('[plants] Downloading GPPD CSV...');
-  const resp = await fetch(GPPD_CSV_URL);
-  if (!resp.ok) throw new Error('GPPD fetch failed: ' + resp.status);
-  const records = parseCsv(Buffer.from(await resp.arrayBuffer()).toString('utf8'), { columns: true });
-  let dropped = 0;
-  const features = records
-    .filter((r: any) => r.country === 'USA' || r.country_long === 'United States of America')
-    .map((r: any) => {
-      const lng = Number(r.longitude), lat = Number(r.latitude);
-      if (!validLngLat(lng, lat)) { dropped++; return null; }
-      const cap = Number(r.capacity_mw);
-      return { type: 'Feature', geometry: { type: 'Point', coordinates: [+lng.toFixed(4), +lat.toFixed(4)] },
-        properties: { id: r.gppd_idnr||'', name: r.name||'Unknown', capacityMW: Number.isFinite(cap)?Math.round(cap):0, technology: normalizeTech(r.primary_fuel, r.name), state: r.country_long_sub1||'', status: r.commissioning_year?'Operating':'Unknown' } };
-    }).filter(Boolean);
-  const fc = { type: 'FeatureCollection', features };
-  validateFC('plants', fc);
-  if (dropped) console.warn('[plants] Dropped ' + dropped + ' invalid features');
-  await fs.writeFile(path.join(OUT_DIR, 'plants.geojson'), JSON.stringify(fc));
+  console.log('[plants] Downloading ArcGIS Power Plants data (paginated)...');
+  const allFeatures = await fetchAllFeatures(GPPD_CSV_URL, '1=1');
+  
+  if (!allFeatures.length) {
+    console.warn('[plants] 0 features returned');
+    return;
+  }
+
+  const features = allFeatures.map((f: any) => {
+    if (!f.geometry || !f.geometry.coordinates) return null;
+    const p = f.properties || {};
+    const capacity = p.SUMMER_CAP ?? p.CAPACITY ?? p.capacity_mw ?? 0;
+    const fuel = p.PrimSource ?? p.FUEL_TYPE ?? p.PRIM_FUEL ?? p.primary_fuel ?? 'Other';
+    
+    return {
+      type: 'Feature',
+      geometry: f.geometry,
+      properties: {
+        id: String(p.OBJECTID || p.FID || ''),
+        name: p.Plant_Name || p.NAME || 'Unknown',
+        capacityMW: Math.round(Number(capacity)),
+        plantType: normalizeTech(fuel),
+        state: p.State || p.STATE || '',
+        status: 'Operating',
+        
+        // Detailed fields requested by user
+        Plant_Name: p.Plant_Name || p.NAME || 'Unknown',
+        City: p.City || p.CITY || 'N/A',
+        County: p.County || p.COUNTY || 'N/A',
+        Energy_sources: p.Gentech || p.Energy_sources || 'N/A',
+        Maximum_output_MW: p.Total_MW || p.Maximum_output_MW || p.capacity_mw || 0,
+        
+        // Breakdown
+        Bat_MW: Number(p.Bat_MW || 0),
+        Bio_MW: Number(p.Bio_MW || 0),
+        Coal_MW: Number(p.Coal_MW || 0),
+        Oth_MW: Number(p.Oth_MW || 0),
+        Geo_MW: Number(p.Geo_MW || 0),
+        Hydro_MW: Number(p.Hydro_MW || 0),
+        Ng_MW: Number(p.Ng_MW || 0),
+        Nuc_MW: Number(p.Nuc_MW || 0),
+        Pet_MW: Number(p.Pet_MW || 0),
+        Ps_MW: Number(p.Ps_MW || 0),
+        Sol_MW: Number(p.Sol_MW || 0),
+        Wnd_MW: Number(p.Wnd_MW || 0),
+        
+        // Details
+        Sector_name: p.Sector_name || 'N/A',
+        Primsource: p.Primsource || p.PrimSource || 'N/A',
+        Street: p.Street || 'N/A',
+        Nameplate: p.Nameplate || p.Total_MW || 'N/A',
+        Tech: p.Tech || 'N/A',
+        Util_name: p.Util_name || 'N/A',
+        Utility: p.Utility || p.Utility_Na || p.Util_name || 'N/A',
+        Zip: p.Zip || 'N/A'
+      }
+    };
+  }).filter(Boolean);
+  
+  validateFC('plants', { type: 'FeatureCollection', features });
+  
+  const ws = createWriteStream(path.join(OUT_DIR, 'plants.geojson'));
+  ws.write('{"type":"FeatureCollection","features":[');
+  for (let i = 0; i < features.length; i++) {
+    ws.write(JSON.stringify(features[i]));
+    if (i < features.length - 1) ws.write(',');
+  }
+  ws.write(']}');
+  ws.end();
+  await new Promise<void>((resolve, reject) => {
+    ws.on('finish', () => resolve());
+    ws.on('error', (err) => reject(err));
+  });
   console.log('[plants] Written to public/data/plants.geojson');
 }
 
 async function buildTransmission() {
-  console.log('[transmission] Downloading HIFLD sample...');
-  const resp = await fetch(HIFLD_TX_URL);
-  if (!resp.ok) throw new Error('HIFLD TX failed: ' + resp.status);
-  const raw: any = await resp.json();
-  if (!raw?.features?.length) { await fs.writeFile(path.join(OUT_DIR, 'transmission.geojson'), JSON.stringify({ type: 'FeatureCollection', features: [] })); return; }
-  let dropped = 0;
-  const features = raw.features.map((f: any) => {
-    if (!f.geometry) { dropped++; return null; }
-    if (f.geometry.type !== 'LineString' && f.geometry.type !== 'MultiLineString') { dropped++; return null; }
-    const p = f.properties||{}, v = p.VOLTAGE!=null?Number(p.VOLTAGE):null;
-    return { type: 'Feature', geometry: f.geometry, properties: { id: String(p.ID||''), voltageKV: Number.isFinite(v)?v:null, owner: p.OWNER||'', type: p.TYPE||'' } };
-  }).filter(Boolean);
-  const fc = { type: 'FeatureCollection', features };
-  validateFC('transmission', fc);
-  await fs.writeFile(path.join(OUT_DIR, 'transmission.geojson'), JSON.stringify(fc));
-  console.log('[transmission] Written to public/data/transmission.geojson (dev sample - upload full dataset to Mapbox Tilesets for production)');
+  console.log('Fetching transmission lines...');
+  
+  const baseUrl = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/US_Electric_Power_Transmission_Lines/FeatureServer/0/query';
+  const allFeatures = [];
+  let offset = 0;
+  const batchSize = 2000;
+  
+  while (true) {
+    const params = new URLSearchParams({
+      where: '1=1',
+      outFields: '*',
+      f: 'geojson',
+      resultOffset: String(offset),
+      resultRecordCount: String(batchSize)
+    });
+    
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const response = await fetch(`${baseUrl}?${params}`);
+        if (!response.ok) {
+          console.error(`HTTP ${response.status}: ${response.statusText}`);
+          break;
+        }
+        
+        const data: any = await response.json();
+        
+        if (!data.features || data.features.length === 0) {
+          console.log('No more features to fetch');
+          offset = -1; // signal end
+          break;
+        }
+        
+        allFeatures.push(...data.features);
+        console.log(`Fetched ${allFeatures.length} transmission lines so far...`);
+        
+        if (data.features.length < batchSize) offset = -1;
+        else offset += batchSize;
+        
+        break; // Success, exit retry loop
+      } catch (error) {
+        retries--;
+        console.error(`Fetch error (retries left: ${retries}):`, error);
+        if (retries === 0) {
+          offset = -1; // Give up
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // wait longer before retry
+        }
+      }
+    }
+    
+    if (offset === -1) break;
+    
+    // Delay between normal batches
+    await new Promise(resolve => setTimeout(resolve, 800));
+  }
+  
+  const geojson = {
+    type: 'FeatureCollection',
+    features: allFeatures
+  };
+  
+  await fs.writeFile(
+    path.join(process.cwd(), 'public', 'data', 'transmission.geojson'),
+    JSON.stringify(geojson),
+    'utf-8'
+  );
+  
+  console.log(`✓ Successfully built ${allFeatures.length} transmission lines`);
+  return allFeatures.length;
 }
 
-async function buildSubstations() {
-  console.log('[substations] Downloading HIFLD...');
-  const resp = await fetch(HIFLD_SUBS_URL);
-  if (!resp.ok) throw new Error('HIFLD Subs failed: ' + resp.status);
-  const raw: any = await resp.json();
-  if (!raw?.features?.length) { await fs.writeFile(path.join(OUT_DIR, 'substations.geojson'), JSON.stringify({ type: 'FeatureCollection', features: [] })); return; }
-  let dropped = 0;
-  const features = raw.features.map((f: any) => {
-    if (!f.geometry || f.geometry.type !== 'Point') { dropped++; return null; }
-    const [lng, lat] = f.geometry.coordinates;
-    if (!validLngLat(lng, lat)) { dropped++; return null; }
-    const p = f.properties||{}, vRaw = String(p.VOLTAGES||'').split(';').map(Number).filter(Number.isFinite);
-    return { type: 'Feature', geometry: { type: 'Point', coordinates: [+lng.toFixed(4), +lat.toFixed(4)] },
-      properties: { id: String(p.ID||p.OBJECTID||''), name: p.NAME||'Substation', voltageKV: vRaw.length?Math.max(...vRaw):null, owner: p.OWNER||'', state: p.STATE||'' } };
-  }).filter(Boolean);
-  const fc = { type: 'FeatureCollection', features };
-  validateFC('substations', fc);
-  await fs.writeFile(path.join(OUT_DIR, 'substations.geojson'), JSON.stringify(fc));
-  console.log('[substations] Written to public/data/substations.geojson');
+async function buildSubstations(): Promise<void> {
+  console.log('\n📍 Building substations data (paginated)...');
+  
+  try {
+    const allFeatures = await fetchAllFeatures(HIFLD_SUBS_BASE, '1=1');
+    console.log(`  ✓ Total fetched ${allFeatures.length} substations`);
+    
+    if (allFeatures.length === 0) {
+      console.warn('  ⚠ No substation features returned');
+      await fs.writeFile(
+        path.join(OUT_DIR, 'substations.geojson'),
+        JSON.stringify({ type: 'FeatureCollection', features: [] })
+      );
+      return;
+    }
+    
+    const collection = {
+      type: 'FeatureCollection',
+      features: allFeatures.map((f: any) => {
+        const props = f.properties || {};
+        const v = props.MAX_VOLT ?? props.voltage ?? props.VOLTAGE ?? null;
+        return {
+          type: 'Feature',
+          geometry: f.geometry,
+          properties: {
+            NAME: props.NAME || 'Unknown',
+            CITY: props.CITY || 'N/A',
+            COUNTY: props.COUNTY || 'N/A',
+            ZIP: props.ZIP || 'N/A',
+            STATUS: props.STATUS || 'N/A',
+            STATE: props.STATE || 'N/A',
+            NAICS_DESC: props.NAICS_DESC || 'N/A',
+            MAX_VOLT: (v != null && v > 0) ? Number(v) : null,
+            voltageKV: (v != null && v > 0) ? Number(v) : null,
+          }
+        };
+      })
+    };
+    
+    await fs.writeFile(
+      path.join(OUT_DIR, 'substations.geojson'),
+      JSON.stringify(collection)
+    );
+    
+    console.log(`  ✓ Wrote ${collection.features.length} substations to file`);
+  } catch (error) {
+    console.error('  ✗ Substations fetch failed:', error);
+    await fs.writeFile(
+      path.join(OUT_DIR, 'substations.geojson'),
+      JSON.stringify({ type: 'FeatureCollection', features: [] })
+    );
+  }
 }
 
 async function buildDataCenters() {
