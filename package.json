@@ -7,7 +7,6 @@
     "dev": "tsx server.ts",
     "start": "tsx server.ts",
     "build:transmission": "tsx scripts/build-transmission.ts",
-    "prebuild": "npm run build:transmission",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
