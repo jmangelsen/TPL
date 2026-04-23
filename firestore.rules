@@ -50,14 +50,13 @@ service cloud.firestore {
     }
 
     function isValidReportRequest(data) {
-      return data.keys().hasAll(['persona', 'name', 'email', 'organization', 'instructions', 'date']) &&
-             data.keys().hasOnly(['persona', 'name', 'email', 'organization', 'instructions', 'date']) &&
-             data.persona is string && data.persona.size() < 100 &&
-             data.name is string && data.name.size() < 100 &&
-             isValidEmail(data.email) &&
-             data.organization is string && data.organization.size() < 200 &&
-             data.instructions is string && data.instructions.size() < 5000 &&
-             isValidDateString(data.date);
+      return data.keys().hasAll(['persona', 'name', 'email', 'organization', 'instructions', 'date'])
+        && data.persona is string && data.persona.size() < 100
+        && data.name is string && data.name.size() < 100
+        && isValidEmail(data.email)
+        && data.organization is string && data.organization.size() < 200
+        && data.instructions is string && data.instructions.size() < 5000
+        && isValidDateString(data.date);
     }
 
     function isValidCompanyNews(data) {

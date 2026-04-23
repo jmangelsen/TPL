@@ -12,13 +12,3 @@ env:
     secret: NEWSAPI_API_KEY
     availability:
       - RUNTIME
-
-  - variable: SMTP_USER
-    secret: SMTP_USER
-    availability:
-      - RUNTIME
-
-  - variable: SMTP_PASS
-    secret: SMTP_PASS
-    availability:
-      - RUNTIME

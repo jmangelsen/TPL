@@ -3,7 +3,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cron from "node-cron";
 import { Parser } from "json2csv";
-import nodemailer from "nodemailer";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, setDoc, getDocs, query, where, limit, deleteDoc, writeBatch, getDoc } from "firebase/firestore";
 import admin from "firebase-admin";
@@ -199,9 +198,8 @@ async function startServer() {
     if (!persona || !name || !email || !organization || !instructions) {
       return res.status(400).json({ error: "All fields are required" });
     }
-
+    
     try {
-      // Store in Firestore
       const newRequestRef = doc(collection(db, "report_requests"));
       await setDoc(newRequestRef, {
         persona,
@@ -209,58 +207,17 @@ async function startServer() {
         email,
         organization,
         instructions,
-        date: new Date().toISOString()
+        status: "new",
+        date: new Date().toISOString(),
+        reviewedAt: null,
+        reviewedBy: null,
+        notes: ""
       });
-
-      // Send Email
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      const mailOptions = {
-        from: '"The Physical Layer" <Research@aiphysicallayer.net>',
-        to: "Research@aiphysicallayer.net",
-        subject: `New Report Request: ${persona}`,
-        text: `
-A new report request has been received from the TPL website.
-
-Persona: ${persona}
-Name: ${name}
-Email: ${email}
-Organization: ${organization}
-
-Instructions:
-${instructions}
-        `,
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #1a2633;">
-            <h2 style="color: #2563eb; text-transform: uppercase;">New Report Request: ${persona}</h2>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Organization:</strong> ${organization}</p>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-            <p><strong>Instructions:</strong></p>
-            <p style="white-space: pre-wrap; background: #f8fafc; padding: 15px; border-radius: 4px;">${instructions}</p>
-          </div>
-        `
-      };
-
-      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-        await transporter.sendMail(mailOptions);
-        console.log(`Report request emailed successfully to Research@aiphysicallayer.net`);
-      } else {
-        console.log("SMTP credentials missing. Request stored in Firestore but not emailed.");
-      }
-
+      
+      console.log(`New report request stored: ${persona} from ${email}`);
       res.status(200).json({ message: "Request received successfully" });
     } catch (error) {
-      console.error("Error processing report request:", error);
+      console.error("Error storing report request:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

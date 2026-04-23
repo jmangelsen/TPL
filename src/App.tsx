@@ -39,6 +39,7 @@ import { SubscribeForm } from './components/SubscribeForm';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminMapProjects } from './pages/admin/MapProjects';
+import { ReportRequests } from './pages/admin/ReportRequests';
 import { IntelligenceArchive } from './components/IntelligenceArchive';
 import { ConstraintMonitor } from './components/ConstraintMonitor';
 import { MonitorMethodology } from './pages/MonitorMethodology';
@@ -882,6 +883,7 @@ export default function App() {
                 <Route path="/admin/navigator" element={isAdmin ? <Navigator /> : <Home />} />
                 <Route path="/admin/map-projects" element={isAdmin ? <AdminMapProjects /> : <Home />} />
                 <Route path="/admin/errors" element={isAdmin ? <SiteErrors /> : <Home />} />
+                <Route path="/admin/report-requests" element={effectiveIsAdmin ? <ReportRequests /> : <Navigate to="/" replace />} />
 
                 {/* Dynamic Constraint Pages */}
                 <Route path="/power" element={<ConstraintDetail constraintId="power" />} />
